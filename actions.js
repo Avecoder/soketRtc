@@ -21,7 +21,7 @@ const handleOffer = ({data}) => {
         if(!candidateId || !candidateUser)  throw new Error('Candidate not found');
         offerUser.candidate = candidateId
         candidateUser.candidate = userId
-        candidateUser.send(JSON.stringify({type: 'call', offer: {...data, userId, name: offerUser.name, candidateId}}))
+        candidateUser.send(JSON.stringify({type: 'call', offer: {...data, userId, name: offerUser.name, candidateId: userId}})) // for another user our id is candidate, mb gde-to obosralsya, no da ladno, vse workaet 
         console.log(`User ${userId} is calling user ${candidateId}`);
 
     } catch(err) {
