@@ -22,7 +22,7 @@ const handleOffer = ({data}) => {
         offerUser.candidate = candidateId
         candidateUser.candidate = userId
         candidateUser.send(JSON.stringify({type: 'call', offer: {...data, userId, name: offerUser.name, candidateId: userId}})) // for another user our id is candidate, mb gde-to obosralsya, no da ladno, vse workaet 
-        console.log(`User ${userId} is calling user ${candidateId}`);
+        // console.log(`User ${userId} is calling user ${candidateId}`);
 
     } catch(err) {
         console.error('handleOffer err: ', err)
@@ -35,7 +35,7 @@ const handleDecline = ({ws, offerId}) => {
         const me = users[offerUser.candidate]
 
         me.send(JSON.stringify({type: 'decline', name: offerUser.name}))
-        console.log(`User ${me.candidate} is decline user ${offerId}`);
+        // console.log(`User ${me.candidate} is decline user ${offerId}`);
     } catch(err) {
         console.error('handleDecline err: ', err)
     }
@@ -46,7 +46,7 @@ const handleDecline = ({ws, offerId}) => {
 const handleAnswer = ({answer}) => {
     try {
         const {candidateId, id} = answer
-        console.log('candidateId - ', candidateId)
+        // console.log('candidateId - ', candidateId)
         const offerUser = users[candidateId];
         const me = users[id]
 
@@ -77,7 +77,7 @@ const handleSwap = ({id, candidateId}) => {
 
         peer1.candidateIce = peer2?.iceParams || null// me
         peer2.candidateIce = peer1?.iceParams || null // another user
-        console.log('SWAP _ ', JSON.stringify({iceParams1: peer1.candidateIce, iceParams2: peer2.candidateIce}))
+        // console.log('SWAP _ ', JSON.stringify({iceParams1: peer1.candidateIce, iceParams2: peer2.candidateIce}))
         peer1.send(JSON.stringify({type: 'swapIce', data: {iceParams1: peer1.candidateIce, iceParams2: peer2.candidateIce}})) // me and another
         peer2.send(JSON.stringify({type: 'swapIce', data: {iceParams1: peer2.candidateIce, iceParams2: peer1.candidateIce}})) // me and another
     } catch(err) {
@@ -114,11 +114,53 @@ export const removeUser = ({ws}) => {
 
 const handleGetUser = ({ws, roomId}) => {
     try {
-        console.log(roomId, rooms)
+        // console.log(roomId, rooms)
         if(!rooms[roomId]) throw new Error('Not found room')
         ws.send(JSON.stringify({type: 'updateRoom', users: rooms[roomId]}))
     } catch(err) {
         console.error('handleGetUser err: ', err)
+    }
+}
+
+// off/on audio
+const handleSwitchAudio = () => {
+    try {
+        
+    } catch(err) {
+        console.error('handleSwitchAudio err: ', err)
+    }
+}
+
+//off/on video
+
+const handleSwitchVideo = ({roomId, offerSDP, ws}) => {
+    try {
+        const currRoom = rooms[roomId]
+        if(!rooms[roomId]) throw new Error('Not found room - ', roomId);
+
+        const candidates = Object.values(currRoom).filter(user => user.userId !== ws.userId);
+        for(const candidate of candidates) {
+            console.log(candidate)
+            candidate.send(JSON.stringify({type: 'updateOffer', offerSDP, userId: ws.userId}))
+        }
+    } catch(err) {
+        console.error('handleSwitchAudio err: ', err)
+    }
+}
+
+const handleUpdateAnswerInRoom = ({roomId, answerSDP, ws}) => {
+    try {
+        const currRoom = rooms[roomId]
+        if(!rooms[roomId]) throw new Error('Not found room - ', roomId);
+        console.log(Object.values(currRoom).map(u => u.userId))
+        console.log(ws.userId)
+        const candidates = Object.values(currRoom).filter(user => user.userId !== ws.userId);
+        for(const candidate of candidates) {
+            console.log(candidate)
+            candidate.send(JSON.stringify({type: 'updateAnswer', answerSDP}))
+        }
+    } catch(err) {
+        console.error('handleUpdateAnswerInRoom err: ', err)
     }
 }
 
@@ -129,7 +171,12 @@ const actions = {
     'SWAP_ICE': handleSwap,
     'ADD_ICE': handleAddIce,
     'DECLINE': handleDecline,
-    'GET_LIST': handleGetUser
+    'GET_LIST': handleGetUser,
+    'SWITCH_AUDIO': handleSwitchAudio,
+    'SWITCH_VIDEO': handleSwitchVideo,
+    'UPDATE_ANSWER': handleUpdateAnswerInRoom,
+    'ADD_DEMO': () => {},
+    'CONFIRM_DEMO': () => {}
   };
 
 
