@@ -25,7 +25,7 @@ webSocket.on('connection', (ws) => {
 
     ws.on('close', () => {
       removeUser({ws})
-      console.log('Leave user')
+      console.log('Leave user', ws.userId)
     });
   });
 
