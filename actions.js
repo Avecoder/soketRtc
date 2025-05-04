@@ -220,11 +220,26 @@ export const handleEndCall = ({ws}) => {
         if(userRoomId) {
             const candidate = Object.values(rooms[userRoomId]).filter(u => u.userId !== userId)[0]
             delete rooms[userRoomId]
+
+            console.log("Rooms - ", Object.keys(rooms))
             users[candidate?.userId].send(JSON.stringify({type: 'endCall'}))
         }
 
     } catch (err) {
         console.log('handleEndCall err: ', err)
+    }
+}
+
+const handleGetRooms = ({ws}) => {
+    try {
+        
+        const data = {}
+        for(let item in rooms) {
+            data[item] = Object.keys(rooms[item])
+        }
+        ws.send(JSON.stringify({type: 'roomsList', data}))
+    } catch (err) {
+        console.log('handleGetRooms err: ', err)
     }
 }
 
@@ -242,7 +257,8 @@ const actions = {
     'UPDATE_ANSWER': handleUpdateAnswerInRoom,
     'MUTE_VOICE': handleMuteVoice,
     'RELOAD': handleReloadUser,
-    'END_CALL': handleEndCall
+    'END_CALL': handleEndCall,
+    'GET_ROOMS': handleGetRooms
   };
 
 
