@@ -1,6 +1,6 @@
 import WebSocket, {WebSocketServer} from "ws";
 import dotenv from 'dotenv'
-import {parseMessage, removeUser} from './actions.js'
+import {parseMessage, removeUser, users} from './actions.js'
 dotenv.config()
 
 
@@ -24,6 +24,8 @@ webSocket.on('connection', (ws) => {
     });
 
     ws.on('close', () => {
+
+      // handleEndCall({ws})
       removeUser({ws})
       console.log('Leave user', ws.userId)
     });

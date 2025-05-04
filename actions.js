@@ -1,13 +1,29 @@
 import { v4 as uuidv4 } from 'uuid';
 
-const users = {}
+export const users = {}
 const rooms = {
 
 }
 
 
 function getKeyByValue(object, value) {
-    console.log(Object.keys(object))
+    // console.log(Object.keys(object))
+}
+
+
+const findUserInRooms = ({userId}) => {
+    const currentUserId = userId;
+    let userRoomId = null;
+    for (const roomId in rooms) {
+        if (rooms.hasOwnProperty(roomId)) {
+            
+            if (rooms[roomId][currentUserId]) {
+                userRoomId = roomId;
+                break;
+            }
+        }
+    }
+    return {userRoomId}
 }
 
 const handleOffer = ({data}) => {
@@ -87,23 +103,10 @@ const handleSwap = ({id, candidateId}) => {
 const handleAddUser = ({ws, userId, name}) => {
     try {
         if(userId) {
-            console.log("INFO - ", users[userId]?.statusConnect)
             if(users[userId] && users[userId]?.statusConnect == 'reload') {
-                console.log('RECCONECT - ', userId)
-                const currentUserId = userId;
-                let userRoomId = null;
-                for (const roomId in rooms) {
-                    if (rooms.hasOwnProperty(roomId)) {
-                        if (rooms[roomId][currentUserId]) {
-                            userRoomId = roomId;
-                            break;
-                        }
-                    }
-                }
-                
+                const {userRoomId} = findUserInRooms({userId})
                 if(userRoomId) {
                     const candidate = Object.values(rooms[userRoomId]).filter(u => u.userId !== userId)[0]
-                    console.log('PING USER - ', candidate?.userId, candidate?.send)
                     users[candidate?.userId].send(JSON.stringify({type: 'reconnect', candidate: userId}))
                 }
             }
@@ -201,10 +204,27 @@ const handleMuteVoice = ({ws, mute, roomId}) => {
 
 const handleReloadUser = ({ws}) => {
     try {
-        console.log('RELOAD - ', ws.userId)
+        console.log('RELOAD PAGE - ', ws.userId)
         users[ws.userId].statusConnect = 'reload';
     } catch (err) {
         console.error('handleReloadUser err: ', err)
+    }
+}
+
+export const handleEndCall = ({ws}) => {
+    try {
+        
+        const {userId} = ws 
+        if(!userId) throw new Error('Not found user - ', userId);
+        const {userRoomId} = findUserInRooms({userId})
+        if(userRoomId) {
+            const candidate = Object.values(rooms[userRoomId]).filter(u => u.userId !== userId)[0]
+            delete rooms[userRoomId]
+            users[candidate?.userId].send(JSON.stringify({type: 'endCall'}))
+        }
+
+    } catch (err) {
+        console.log('handleEndCall err: ', err)
     }
 }
 
@@ -221,7 +241,8 @@ const actions = {
     'SWITCH_VIDEO': handleSwitchVideo,
     'UPDATE_ANSWER': handleUpdateAnswerInRoom,
     'MUTE_VOICE': handleMuteVoice,
-    'RELOAD': handleReloadUser
+    'RELOAD': handleReloadUser,
+    'END_CALL': handleEndCall
   };
 
 
