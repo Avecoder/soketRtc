@@ -55,7 +55,7 @@ const handleOffer = ({ws, data}) => {
 
     } catch(err) {
 
-        handleException(ws, 'handleOffer', err, data)
+        handleException(ws, 'OFFER', err, data)
     }
 }
 
@@ -74,7 +74,7 @@ const handleDecline = ({ws, offerId}) => {
 
     } catch(err) {
 
-        handleException(ws, 'handleDecline', err, {offerId})
+        handleException(ws, 'DECLINE', err, {offerId})
     }
 }
 
@@ -107,7 +107,7 @@ const handleAnswer = ({answer, currentRoom, ws}) => {
         
     } catch(err) {
 
-        handleException(ws, 'handleAnswer', err, {answer})
+        handleException(ws, 'ANSWER', err, {answer})
     }
 }
 
@@ -128,7 +128,7 @@ const handleSwap = ({id, candidateId, ws}) => {
         peer1.send(JSON.stringify({type: 'swapIce', data: {iceParams1: peer1.candidateIce, iceParams2: peer2.candidateIce}}))
         peer2.send(JSON.stringify({type: 'swapIce', data: {iceParams1: peer2.candidateIce, iceParams2: peer1.candidateIce}})) 
     } catch(err) {
-        handleException(ws, 'handleSwap', err, {id, candidateId})
+        handleException(ws, 'SWAP_ICE', err, {id, candidateId})
     }
 }
 
@@ -154,7 +154,7 @@ const handleAddUser = ({ws, userId, name}) => {
         }
     } catch(err) {
     
-       handleException(ws, 'handleAddUser', err, {userId, name})
+       handleException(ws, 'ADD_USER', err, {userId, name})
     }
 }
 
@@ -163,7 +163,7 @@ const handleAddIce = ({ws, iceParams}) => {
         if(!iceParams) throw new Error("<b>iceParams</b> is required")
         users[ws.userId].iceParams= iceParams
     } catch (err) {
-        handleException(ws, 'handleAddIce', err, {iceParams})
+        handleException(ws, 'ADD_ICE', err, {iceParams})
     }
 }
 
@@ -224,7 +224,7 @@ const handleUpdateAnswerInRoom = ({roomId, answerSDP, ws}) => {
         }
     } catch(err) {
    
-        handleException(ws, 'handleUpdateAnswerInRoom', err, {roomId, answerSDP})
+        handleException(ws, 'UPDATE_ANSWER', err, {roomId, answerSDP})
     }
 }
 
@@ -245,7 +245,7 @@ const handleMuteVoice = ({ws, mute, roomId}) => {
         }
     } catch(err) {
 
-        handleException(ws, 'handleUpdateAnswerInRoom', err, {mute, roomId})
+        handleException(ws, 'MUTE_VOICE', err, {mute, roomId})
     }
 }
 
@@ -256,7 +256,7 @@ const handleReloadUser = ({ws}) => {
         users[ws.userId].statusConnect = 'reload';
     } catch (err) {
 
-        handleException(ws, 'handleReloadUser', err, {})
+        handleException(ws, 'RELOAD', err, {})
     }
 }
 
@@ -276,7 +276,7 @@ export const handleEndCall = ({ws}) => {
 
     } catch (err) {
        
-        handleException(ws, 'handleEndCall', err, {})
+        handleException(ws, 'END_CALL', err, {})
     }
 }
 
@@ -290,7 +290,7 @@ const handleGetRooms = ({ws}) => {
         ws.send(JSON.stringify({type: 'roomsList', data}))
     } catch (err) {
  
-        handleException(ws, 'handleGetRooms', err, {})
+        handleException(ws, 'GET_ROOMS', err, {})
     }
 }
 
