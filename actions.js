@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import {handleException} from './sendError.js' 
 
 export const users = {}
 const rooms = {
@@ -7,101 +8,135 @@ const rooms = {
 
 
 function getKeyByValue(object, value) {
-    // console.log(Object.keys(object))
+
 }
 
 
-const findUserInRooms = ({userId}) => {
-    const currentUserId = userId;
-    let userRoomId = null;
-    for (const roomId in rooms) {
-        if (rooms.hasOwnProperty(roomId)) {
-            
-            if (rooms[roomId][currentUserId]) {
-                userRoomId = roomId;
-                break;
+const findUserInRooms = ({userId, ws}) => {
+    try {
+        if(!userId) throw new Error("userId is required")
+
+        const currentUserId = userId;
+        let userRoomId = null;
+        for (const roomId in rooms) {
+            if (rooms.hasOwnProperty(roomId)) {
+                
+                if (rooms[roomId][currentUserId]) {
+                    userRoomId = roomId;
+                    break;
+                }
             }
         }
+        return {userRoomId}
+    } catch (err) {
+
+        handleException(ws, 'broadcast', err, {userId})
     }
-    return {userRoomId}
 }
 
-const handleOffer = ({data}) => {
+const handleOffer = ({ws, data}) => {
     try {
-        
         const candidateId = data.candidateId
+        if(!candidateId) throw new Error("candidateId is required")
+
         const userId = data.id
+        if(!userId) throw new Error("userId is required")
+
         const candidateUser = users[candidateId]
         const offerUser = users[userId]
+
         if(!userId || !offerUser)  throw new Error('User not found');
         if(!candidateId || !candidateUser)  throw new Error('Candidate not found');
+
         offerUser.candidate = candidateId
         candidateUser.candidate = userId
-        candidateUser.send(JSON.stringify({type: 'call', offer: {...data, userId, name: offerUser.name, candidateId: userId, isRecconect: data?.reconnect ?? false}})) // for another user our id is candidate, mb gde-to obosralsya, no da ladno, vse workaet 
-        // console.log(`User ${userId} is calling user ${candidateId}`);
+        candidateUser.send(JSON.stringify({type: 'call', offer: {...data, userId, name: offerUser.name, candidateId: userId, isRecconect: data?.reconnect ?? false}}))  
+
 
     } catch(err) {
-        console.error('handleOffer err: ', err)
+
+        handleException(ws, 'handleOffer', err, data)
     }
 }
 
 const handleDecline = ({ws, offerId}) => {
     try {
+
+        if(!offerId) throw new Error("offerId is required")
+
         const offerUser = users[offerId]
+        if(!offerUser) throw new Error("peer2 not found")
+
         const me = users[offerUser.candidate]
+        if(!me) throw new Error("peer1 not found")
 
         me.send(JSON.stringify({type: 'decline', name: offerUser.name}))
-        // console.log(`User ${me.candidate} is decline user ${offerId}`);
+
     } catch(err) {
-        console.error('handleDecline err: ', err)
+
+        handleException(ws, 'handleDecline', err, {offerId})
     }
 }
 
 
 
-const handleAnswer = ({answer, currentRoom}) => {
+const handleAnswer = ({answer, currentRoom, ws}) => {
     try {
+        if(!answer) throw new Error("answer is required and must include the following fields: candidateId, id and answer spd")
         const {candidateId, id} = answer
-        // console.log('candidateId - ', candidateId)
+        
+        if(!candidateId) throw new Error("candidateId is required in answer")
+        if(!id) throw new Error("id is required in answer")
+        
         const offerUser = users[candidateId];
-        const me = users[id]
+        if(!offerUser) throw new Error("peer1 not found")
 
-        if(!offerUser) throw new Error('Offer user not found');
-        if(!me) throw new Error('Answer user not found');
+        const me = users[id]
+        if(!me) throw new Error("peer2 not found")
+
+
         const roomId = currentRoom ?? uuidv4()
         rooms[roomId] = {
             [offerUser.userId]: offerUser,
             [me.userId]: me
         }
+
         offerUser.send(JSON.stringify({type: 'acceptCall', answer, roomId}))
         me.send(JSON.stringify({type: 'roomConnect', roomId}))
         offerUser.send(JSON.stringify({type: 'roomConnect', roomId}))
         
     } catch(err) {
-        console.error('handleAnswer err: ', err)
+
+        handleException(ws, 'handleAnswer', err, {answer})
     }
 }
 
-const handleSwap = ({id, candidateId}) => {
+const handleSwap = ({id, candidateId, ws}) => {
     try {
+  
+        if(!id) throw new Error("id is required")
+        if(!candidateId) throw new Error("candidateId is required")
 
         const peer1 = users[id]
         const peer2 = users[candidateId]
-        if(!peer1 || !peer2) throw new Error("peers not found")
+        if(!peer1) throw new Error("our peer was not found")
+        if(!peer1) throw new Error("another peer was not found")
 
 
-        peer1.candidateIce = peer2?.iceParams || null// me
-        peer2.candidateIce = peer1?.iceParams || null // another user
-        // console.log('SWAP _ ', JSON.stringify({iceParams1: peer1.candidateIce, iceParams2: peer2.candidateIce}))
-        peer1.send(JSON.stringify({type: 'swapIce', data: {iceParams1: peer1.candidateIce, iceParams2: peer2.candidateIce}})) // me and another
-        peer2.send(JSON.stringify({type: 'swapIce', data: {iceParams1: peer2.candidateIce, iceParams2: peer1.candidateIce}})) // me and another
+        peer1.candidateIce = peer2?.iceParams || null
+        peer2.candidateIce = peer1?.iceParams || null
+        peer1.send(JSON.stringify({type: 'swapIce', data: {iceParams1: peer1.candidateIce, iceParams2: peer2.candidateIce}}))
+        peer2.send(JSON.stringify({type: 'swapIce', data: {iceParams1: peer2.candidateIce, iceParams2: peer1.candidateIce}})) 
     } catch(err) {
-        console.error('handleSwap err: ', err)
+        handleException(ws, 'handleSwap', err, {id, candidateId})
     }
 }
 
 const handleAddUser = ({ws, userId, name}) => {
     try {
+        if(!userId) throw new Error("userId is required")
+
+
         if(userId) {
             if(users[userId] && users[userId]?.statusConnect == 'reload') {
                 const {userRoomId} = findUserInRooms({userId})
@@ -118,27 +153,28 @@ const handleAddUser = ({ws, userId, name}) => {
             ws.userId = userId
         }
     } catch(err) {
-        console.error('handleAddUser err: ', err)
+    
+       handleException(ws, 'handleAddUser', err, {userId, name})
     }
 }
 
 const handleAddIce = ({ws, iceParams}) => {
     try {
+        if(!iceParams) throw new Error("iceParams is required")
         users[ws.userId].iceParams= iceParams
     } catch (err) {
-        console.error('handleAddIce err: ', err)
+        handleException(ws, 'handleAddIce', err, {iceParams})
     }
 }
 
 export const removeUser = ({ws}) => {
-    // console.log(ws)
+
     getKeyByValue(users, ws)
-    // console.log(data)
+
 }
 
 const handleGetUser = ({ws, roomId}) => {
     try {
-        // console.log(roomId, rooms)
         const currRoom = rooms[roomId]
         if(!currRoom) throw new Error('Not found room')
         const users = Object.values(currRoom)
@@ -169,45 +205,58 @@ const handleSwitchVideo = ({roomId, offerSDP, ws}) => {
             candidate.send(JSON.stringify({type: 'updateOffer', offerSDP, userId: ws.userId}))
         }
     } catch(err) {
+
         console.error('handleSwitchAudio err: ', err)
     }
 }
 
 const handleUpdateAnswerInRoom = ({roomId, answerSDP, ws}) => {
     try {
+        if(!answerSDP) throw new Error("answerSDP is required")
+        if(!roomId) throw new Error("roomId is required")
+
         const currRoom = rooms[roomId]
-        if(!rooms[roomId]) throw new Error('Not found room - ', roomId);
+        if(!rooms[roomId]) throw new Error('Room with id: ', roomId, ' not found');
+
         const candidates = Object.values(currRoom).filter(user => user.userId !== ws.userId);
         for(const candidate of candidates) {
             candidate.send(JSON.stringify({type: 'updateAnswer', answerSDP}))
         }
     } catch(err) {
-        console.error('handleUpdateAnswerInRoom err: ', err)
+   
+        handleException(ws, 'handleUpdateAnswerInRoom', err, {roomId, answerSDP})
     }
 }
 
 const handleMuteVoice = ({ws, mute, roomId}) => {
     try {
+        if(!mute) throw new Error("mute is required")
+        if(!mute) throw new Error("roomId is required")
+
         const currRoom = rooms[roomId]
-        if(!currRoom) throw new Error('Not found room - ', roomId);
+        if(!rooms[roomId]) throw new Error('Room with id: ', roomId, ' not found');   
+
         const {userId} = ws
+
         currRoom[userId].muted = mute
         const candidates = Object.values(currRoom)        
         for(const candidate of candidates) {
             candidate.send(JSON.stringify({type: 'updateRoom', users: candidates}))
         }
     } catch(err) {
-        console.error('handleMuteVoice err: ', err)
+
+        handleException(ws, 'handleUpdateAnswerInRoom', err, {mute, roomId})
     }
 }
 
 
 const handleReloadUser = ({ws}) => {
     try {
-        console.log('RELOAD PAGE - ', ws.userId)
+
         users[ws.userId].statusConnect = 'reload';
     } catch (err) {
-        console.error('handleReloadUser err: ', err)
+
+        handleException(ws, 'handleReloadUser', err, {})
     }
 }
 
@@ -221,12 +270,13 @@ export const handleEndCall = ({ws}) => {
             const candidate = Object.values(rooms[userRoomId]).filter(u => u.userId !== userId)[0]
             delete rooms[userRoomId]
 
-            console.log("Rooms - ", Object.keys(rooms))
+        
             users[candidate?.userId].send(JSON.stringify({type: 'endCall'}))
         }
 
     } catch (err) {
-        console.log('handleEndCall err: ', err)
+       
+        handleException(ws, 'handleEndCall', err, {})
     }
 }
 
@@ -239,7 +289,8 @@ const handleGetRooms = ({ws}) => {
         }
         ws.send(JSON.stringify({type: 'roomsList', data}))
     } catch (err) {
-        console.log('handleGetRooms err: ', err)
+ 
+        handleException(ws, 'handleGetRooms', err, {})
     }
 }
 
@@ -266,6 +317,7 @@ export const parseMessage = (data) => {
     try {
       
       const { action, ...somethingData } = JSON.parse(data.toString());
+
       return { currAction: actions[action], ...somethingData };
     } catch (err) {
       console.error('Parse error - ', err);
