@@ -14,7 +14,7 @@ function getKeyByValue(object, value) {
 
 const findUserInRooms = ({userId, ws}) => {
     try {
-        if(!userId) throw new Error("userId is required")
+        if(!userId) throw new Error("<b>userId</b> is required")
 
         const currentUserId = userId;
         let userRoomId = null;
@@ -37,10 +37,10 @@ const findUserInRooms = ({userId, ws}) => {
 const handleOffer = ({ws, data}) => {
     try {
         const candidateId = data.candidateId
-        if(!candidateId) throw new Error("candidateId is required")
+        if(!candidateId) throw new Error("<b>candidateId</b> is required")
 
         const userId = data.id
-        if(!userId) throw new Error("userId is required")
+        if(!userId) throw new Error("<b>userId</b> is required")
 
         const candidateUser = users[candidateId]
         const offerUser = users[userId]
@@ -62,7 +62,7 @@ const handleOffer = ({ws, data}) => {
 const handleDecline = ({ws, offerId}) => {
     try {
 
-        if(!offerId) throw new Error("offerId is required")
+        if(!offerId) throw new Error("<b>offerId</b> is required")
 
         const offerUser = users[offerId]
         if(!offerUser) throw new Error("peer2 not found")
@@ -82,11 +82,11 @@ const handleDecline = ({ws, offerId}) => {
 
 const handleAnswer = ({answer, currentRoom, ws}) => {
     try {
-        if(!answer) throw new Error("answer is required and must include the following fields: candidateId, id and answer spd")
+        if(!answer) throw new Error(`<b>answer</b> is required and must include the following fields: \n - candidateId \n - id \n - answer spd (Как угодно можно назвать)`)
         const {candidateId, id} = answer
         
-        if(!candidateId) throw new Error("candidateId is required in answer")
-        if(!id) throw new Error("id is required in answer")
+        if(!candidateId) throw new Error("<b>candidateId</b> is required in answer")
+        if(!id) throw new Error("<b>id</b> is required in answer")
         
         const offerUser = users[candidateId];
         if(!offerUser) throw new Error("peer1 not found")
@@ -114,8 +114,8 @@ const handleAnswer = ({answer, currentRoom, ws}) => {
 const handleSwap = ({id, candidateId, ws}) => {
     try {
   
-        if(!id) throw new Error("id is required")
-        if(!candidateId) throw new Error("candidateId is required")
+        if(!id) throw new Error("<b>id</b> is required")
+        if(!candidateId) throw new Error("<b>candidateId</b> is required")
 
         const peer1 = users[id]
         const peer2 = users[candidateId]
@@ -134,7 +134,7 @@ const handleSwap = ({id, candidateId, ws}) => {
 
 const handleAddUser = ({ws, userId, name}) => {
     try {
-        if(!userId) throw new Error("userId is required")
+        if(!userId) throw new Error("<b>userId</b> is required")
 
 
         if(userId) {
@@ -160,7 +160,7 @@ const handleAddUser = ({ws, userId, name}) => {
 
 const handleAddIce = ({ws, iceParams}) => {
     try {
-        if(!iceParams) throw new Error("iceParams is required")
+        if(!iceParams) throw new Error("<b>iceParams</b> is required")
         users[ws.userId].iceParams= iceParams
     } catch (err) {
         handleException(ws, 'handleAddIce', err, {iceParams})
@@ -198,7 +198,7 @@ const handleSwitchAudio = () => {
 const handleSwitchVideo = ({roomId, offerSDP, ws}) => {
     try {
         const currRoom = rooms[roomId]
-        if(!rooms[roomId]) throw new Error('Not found room - ', roomId);
+        if(!rooms[roomId]) throw new Error('Not found room - <b>', roomId, '</b>');
 
         const candidates = Object.values(currRoom).filter(user => user.userId !== ws.userId);
         for(const candidate of candidates) {
@@ -212,11 +212,11 @@ const handleSwitchVideo = ({roomId, offerSDP, ws}) => {
 
 const handleUpdateAnswerInRoom = ({roomId, answerSDP, ws}) => {
     try {
-        if(!answerSDP) throw new Error("answerSDP is required")
-        if(!roomId) throw new Error("roomId is required")
+        if(!answerSDP) throw new Error("<b>answerSDP</b> is required")
+        if(!roomId) throw new Error("<b>roomId</b> is required")
 
         const currRoom = rooms[roomId]
-        if(!rooms[roomId]) throw new Error('Room with id: ', roomId, ' not found');
+        if(!rooms[roomId]) throw new Error('Room with id: <b>', roomId, '</b> not found');
 
         const candidates = Object.values(currRoom).filter(user => user.userId !== ws.userId);
         for(const candidate of candidates) {
@@ -230,11 +230,11 @@ const handleUpdateAnswerInRoom = ({roomId, answerSDP, ws}) => {
 
 const handleMuteVoice = ({ws, mute, roomId}) => {
     try {
-        if(!mute) throw new Error("mute is required")
-        if(!mute) throw new Error("roomId is required")
+        if(!mute) throw new Error("<b>mute</b> is required")
+        if(!mute) throw new Error("<b>roomId</b> is required")
 
         const currRoom = rooms[roomId]
-        if(!rooms[roomId]) throw new Error('Room with id: ', roomId, ' not found');   
+        if(!rooms[roomId]) throw new Error('Room with id: <b>', roomId, '</b> not found');   
 
         const {userId} = ws
 
@@ -264,7 +264,7 @@ export const handleEndCall = ({ws}) => {
     try {
         
         const {userId} = ws 
-        if(!userId) throw new Error('Not found user - ', userId);
+        if(!userId) throw new Error('Not found user - <b>', userId, '</b>');
         const {userRoomId} = findUserInRooms({userId})
         if(userRoomId) {
             const candidate = Object.values(rooms[userRoomId]).filter(u => u.userId !== userId)[0]
