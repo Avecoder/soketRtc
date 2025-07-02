@@ -34,7 +34,7 @@ const findUserInRooms = ({userId, ws}) => {
     }
 }
 
-const handleOffer = ({ws, data}) => {
+const handleOffer = ({ws, ...data}) => {
     try {
         const candidateId = data.candidateId
         if(!candidateId) throw new Error("<b>candidateId</b> is required")
@@ -316,9 +316,9 @@ const actions = {
 export const parseMessage = (data) => {
     try {
       
-      const { action, ...somethingData } = JSON.parse(data.toString());
+      const { route, ...somethingData } = JSON.parse(data.toString());
 
-      return { currAction: actions[action], ...somethingData };
+      return { currAction: actions[route], ...somethingData };
     } catch (err) {
       console.error('Parse error - ', err);
       return () => {};

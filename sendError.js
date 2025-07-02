@@ -4,7 +4,7 @@ import {sendBroadcast} from './telegramLogs.js'
 
 export const handleException = (ws, handlerName, err, context = {}) => {
     logError(`[${handlerName}]`, err);
-    sendBroadcast(`⚠️ <b>[${handlerName}]</b> ⚠️\n  ${err.message}`)
+    sendBroadcast(`⚠️  <b>[${handlerName}]</b> ⚠️ \n  ${err.message}} \n ${JSON.stringify(context)} `)
 
     try {
         ws?.send?.(JSON.stringify({
