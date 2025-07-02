@@ -36,6 +36,7 @@ const findUserInRooms = ({userId, ws}) => {
 
 const handleOffer = ({ws, ...data}) => {
     try {
+        console.log('OFFER - ', data)
         const candidateId = data.candidateId
         if(!candidateId) throw new Error("<b>candidateId</b> is required")
 
