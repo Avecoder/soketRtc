@@ -1,88 +1,72 @@
-
-
-
-/////
-
 import { v4 as uuidv4 } from 'uuid';
-import {handleException} from './sendError.js'
+import {handleException} from './logger/sendError.js' 
 
 export const users = {}
-const pairOfPeers = {
+const rooms = {
 
 }
 
-const sendMessage = (route = '/', sender, data = {}) => {
-    const sendedData = JSON.stringify({type: route.split('/')[1], ...data})
-    sender.send(sendedData)
-}
 
-const broadcast = ({userId, type, data = {}, ws}) => {
-    try {
-        
-        if(!userId) throw new Error('UserId is required');
 
-        const me = users[userId];
-        const candidate = users[me.candidate];
-
-        if(!me) throw new Error('Me not found');
-        if(!candidate) throw new Error('Candidate not found');
-
-        me.send(JSON.stringify({type, ...data}))
-        candidate.send(JSON.stringify({type, ...data}))
-    } catch (err) {
-        handleException(ws, 'broadcast', err, data)
-    }
-}
 
 
 function getKeyByValue(object, value) {
-    // console.log(Object.keys(object))
-}
-
-const handleSetUserId = () => {
 
 }
 
-const findUserInpairOfPeers = ({userId}) => {
+
+const findUserInRooms = ({userId, ws}) => {
     try {
-        if(!userId) throw new Error('userId is required');
+        if(!userId) throw new Error("<b>userId</b> is required")
+
         const currentUserId = userId;
-        let userpairId = null;
-        for (const pairId in pairOfPeers) {
-            if (pairOfPeers.hasOwnProperty(pairId)) {
+        let userRoomId = null;
+        for (const roomId in rooms) {
+            if (rooms.hasOwnProperty(roomId)) {
                 
-                if (pairOfPeers[pairId][currentUserId]) {
-                    userpairId = pairId;
+                if (rooms[roomId][currentUserId]) {
+                    userRoomId = roomId;
                     break;
                 }
             }
-    }
-        return {userpairId}
-    }
-    catch (err) {
-        handleException(ws, 'findUserInpairOfPeers', err, {})
+        }
+        return {userRoomId}
+    } catch (err) {
+
+        handleException(ws, 'broadcast', err, {userId})
     }
 }
 
-const handleOffer = ({candidateId, userId, reconnect = false, ws, ...userData}) => {
+const handleOffer = ({ws, candidateId, userId, ...data}) => {
     try {
-        if(!candidateId) throw new Error('candidateId is required');
-        if(!userId) throw new Error('userId is required');
-        const candidateUser = users[candidateId]
-        const offerUser = users[userId] 
+        if(!candidateId) throw new Error("<b>candidateId</b> is required")
+        if(!userId) throw new Error("<b>userId</b> is required")
 
-
+        const peer1 = users[userId]
+        const peer2 = users[candidateId]
+        
 
         if(!userId || !offerUser)  throw new Error('User not found');
-        if(!candidateId || !candidateUser)  throw new Error('Candidate not found');
+        if(!candidateId || !candidateUser)  {
+            peer1.send({type: 'unavailable'}) // юзер не доступен
+            return
+        }
 
-
-        offerUser.candidate = candidateId
-        candidateUser.candidate = userId
-        candidateUser.send(JSON.stringify({type: 'call', userId, candidateId: userId, isRecconect: reconnect, ...userData})) 
-
+        peer1.candidate = candidateId
+        peer2.candidate = userId
+        sendMessage('/call')
+        peer2.send(JSON.stringify({
+            type: 'call', 
+            offer: {
+                ...data, 
+                userId, 
+                name: offerUser.name, 
+                candidateId: userId, 
+                isRecconect: data?.reconnect ?? false
+            }
+        }))  
     } catch(err) {
-        handleException(ws, 'handleOffer', err, {})
+        handleException(ws, 'OFFER', err, data)
     }
 }
 
@@ -98,63 +82,71 @@ const handleDecline = ({ws, userId}) => {
 
         me.send(JSON.stringify({type: 'decline', name: offerUser.name}))
     } catch(err) {
-        handleException(ws, 'handleDecline', err, {})
+        handleException(ws, 'DECLINE', err, {})
     }
 }
 
 
 
-const handleAnswer = ({answer, userId}) => {
+const handleAnswer = ({answer, currentRoom, ws}) => {
     try {
+        if(!answer) throw new Error(`<b>answer</b> is required and must include the following fields: \n - candidateId \n - id \n - answer spd (Как угодно можно назвать)`)
+        const {candidateId, id} = answer
         
-        const me = users[userId]
-        const offerUser = users[me.candidate]
-
-        if(!offerUser) throw new Error('Offer user not found');
-        if(!me) throw new Error('Answer user not found');
-
+        if(!candidateId) throw new Error("<b>candidateId</b> is required in answer")
+        if(!id) throw new Error("<b>id</b> is required in answer")
         
-        const pairId = uuidv4()
-        pairOfPeers[pairId] = {
+        const offerUser = users[candidateId];
+        if(!offerUser) throw new Error("peer1 not found")
+
+        const me = users[id]
+        if(!me) throw new Error("peer2 not found")
+
+
+        const roomId = currentRoom ?? uuidv4()
+        rooms[roomId] = {
             [offerUser.userId]: offerUser,
             [me.userId]: me
         }
 
-        offerUser.send(JSON.stringify({type: 'acceptCall', answer}))
-        broadcast({userId, type: 'connect'})
+        offerUser.send(JSON.stringify({type: 'acceptCall', answer, roomId}))
+        me.send(JSON.stringify({type: 'roomConnect', roomId}))
+        offerUser.send(JSON.stringify({type: 'roomConnect', roomId}))
     } catch(err) {
-        handleException(ws, 'handleAnswer', err, {})
+        handleException(ws, 'ANSWER', err, {answer})
     }
 }
 
-const handleSwap = ({userId}) => {
+const handleSwap = ({id, candidateId, ws}) => {
     try {
+  
+        if(!id) throw new Error("<b>id</b> is required")
+        if(!candidateId) throw new Error("<b>candidateId</b> is required")
 
-        const peer1 = users[userId]
-        const candidateId = peer1.candidate;
+        const peer1 = users[id]
         const peer2 = users[candidateId]
-        if(!peer1 || !peer2) throw new Error("peers not found")
+        if(!peer1) throw new Error("our peer was not found")
+        if(!peer1) throw new Error("another peer was not found")
 
 
-        peer1.candidateIce = peer2?.iceCandidates || null// me
-        peer2.candidateIce = peer1?.iceCandidates || null // another user
-        // console.log('SWAP _ ', JSON.stringify({iceParams1: peer1.candidateIce, iceParams2: peer2.candidateIce}))
-
-        sendMessage('/remoteIce', peer1, {iceCandidates: peer1.candidateIce})
-        sendMessage('/remoteIce', peer2, {iceCandidates: peer2.candidateIce})
+        peer1.candidateIce = peer2?.iceParams || null
+        peer2.candidateIce = peer1?.iceParams || null
+        peer1.send(JSON.stringify({type: 'swapIce', data: {iceParams1: peer1.candidateIce, iceParams2: peer2.candidateIce}}))
+        peer2.send(JSON.stringify({type: 'swapIce', data: {iceParams1: peer2.candidateIce, iceParams2: peer1.candidateIce}})) 
     } catch(err) {
-        console.error('handleSwap err: ', err)
+        handleException(ws, 'SWAP_ICE', err, {id, candidateId})
     }
 }
 
 const handleAddUser = ({ws, userId, name}) => {
     try {
-        console.log('Adds users -', userId)
+        if(!userId) throw new Error("<b>userId</b> is required")
+
         if(userId) {
             if(users[userId] && users[userId]?.statusConnect == 'reload') {
-                const {userpairId} = findUserInpairOfPeers({userId})
-                if(userpairId) {
-                    const candidate = Object.values(pairOfPeers[userpairId]).filter(u => u.userId !== userId)[0]
+                const {userRoomId} = findUserInRooms({userId})
+                if(userRoomId) {
+                    const candidate = Object.values(rooms[userRoomId]).filter(u => u.userId !== userId)[0]
                     users[candidate?.userId].send(JSON.stringify({type: 'reconnect', candidate: userId}))
                 }
             }
@@ -166,28 +158,29 @@ const handleAddUser = ({ws, userId, name}) => {
             ws.userId = userId
         }
     } catch(err) {
-        console.error('handleAddUser err: ', err)
+    
+       handleException(ws, 'ADD_USER', err, {userId, name})
     }
 }
 
-const handleAddIce = ({iceCandidates, userId}) => {
+const handleAddIce = ({ws, iceParams}) => {
     try {
-        users[userId].iceCandidates = iceCandidates
+        if(!iceParams) throw new Error("<b>iceParams</b> is required")
+        users[ws.userId].iceParams= iceParams
     } catch (err) {
-        console.error('handleAddIce err: ', err)
+        handleException(ws, 'ADD_ICE', err, {iceParams})
     }
 }
 
 export const removeUser = ({ws}) => {
-    // console.log(ws)
+
     getKeyByValue(users, ws)
-    // console.log(data)
+
 }
 
-const handleGetUser = ({ws, pairId}) => {
+const handleGetUser = ({ws, roomId}) => {
     try {
-        // console.log(pairId, pairOfPeers)
-        const currRoom = pairOfPeers[pairId]
+        const currRoom = rooms[roomId]
         if(!currRoom) throw new Error('Not found room')
         const users = Object.values(currRoom)
         ws.send(JSON.stringify({type: 'updateRoom', users: users}))
@@ -207,10 +200,10 @@ const handleSwitchAudio = () => {
 
 //off/on video
 
-const handleSwitchVideo = ({pairId, offerSDP, ws}) => {
+const handleSwitchVideo = ({roomId, offerSDP, ws}) => {
     try {
-        const currRoom = pairOfPeers[pairId]
-        if(!pairOfPeers[pairId]) throw new Error('Not found room - ', pairId);
+        const currRoom = rooms[roomId]
+        if(!rooms[roomId]) throw new Error('Not found room - <b>', roomId, '</b>');
 
         const candidates = Object.values(currRoom).filter(user => user.userId !== ws.userId);
         for(const candidate of candidates) {
@@ -221,78 +214,88 @@ const handleSwitchVideo = ({pairId, offerSDP, ws}) => {
     }
 }
 
-const handleUpdateAnswerInRoom = ({pairId, answerSDP, ws}) => {
+const handleUpdateAnswerInRoom = ({roomId, answerSDP, ws}) => {
     try {
-        const currRoom = pairOfPeers[pairId]
-        if(!pairOfPeers[pairId]) throw new Error('Not found room - ', pairId);
+        if(!answerSDP) throw new Error("<b>answerSDP</b> is required")
+        if(!roomId) throw new Error("<b>roomId</b> is required")
+
+        const currRoom = rooms[roomId]
+        if(!rooms[roomId]) throw new Error('Room with id: <b>', roomId, '</b> not found');
+
         const candidates = Object.values(currRoom).filter(user => user.userId !== ws.userId);
         for(const candidate of candidates) {
             candidate.send(JSON.stringify({type: 'updateAnswer', answerSDP}))
         }
     } catch(err) {
-        console.error('handleUpdateAnswerInRoom err: ', err)
+   
+        handleException(ws, 'UPDATE_ANSWER', err, {roomId, answerSDP})
     }
 }
 
-const handleMuteVoice = ({ws, mute, pairId}) => {
+const handleMuteVoice = ({ws, mute, roomId}) => {
     try {
-        const currRoom = pairOfPeers[pairId]
-        if(!currRoom) throw new Error('Not found room - ', pairId);
+        if(!mute) throw new Error("<b>mute</b> is required")
+        if(!mute) throw new Error("<b>roomId</b> is required")
+
+        const currRoom = rooms[roomId]
+        if(!rooms[roomId]) throw new Error('Room with id: <b>', roomId, '</b> not found');   
+
         const {userId} = ws
+
         currRoom[userId].muted = mute
         const candidates = Object.values(currRoom)        
         for(const candidate of candidates) {
             candidate.send(JSON.stringify({type: 'updateRoom', users: candidates}))
         }
     } catch(err) {
-        console.error('handleMuteVoice err: ', err)
+
+        handleException(ws, 'MUTE_VOICE', err, {mute, roomId})
     }
 }
 
 
 const handleReloadUser = ({ws}) => {
     try {
-        console.log('RELOAD PAGE - ', ws.userId)
         users[ws.userId].statusConnect = 'reload';
     } catch (err) {
-        console.error('handleReloadUser err: ', err)
+        handleException(ws, 'RELOAD', err, {})
     }
 }
 
 export const handleEndCall = ({ws}) => {
     try {
-        
         const {userId} = ws 
-        if(!userId) throw new Error('Not found user - ', userId);
-        const {userpairId} = findUserInpairOfPeers({userId})
-        if(userpairId) {
-            const candidate = Object.values(pairOfPeers[userpairId]).filter(u => u.userId !== userId)[0]
-            delete pairOfPeers[userpairId]
+        if(!userId) throw new Error('Not found user - <b>', userId, '</b>');
+        const {userRoomId} = findUserInRooms({userId})
+        if(userRoomId) {
+            const candidate = Object.values(rooms[userRoomId]).filter(u => u.userId !== userId)[0]
+            delete rooms[userRoomId]
 
-            console.log("pairOfPeers - ", Object.keys(pairOfPeers))
+        
             users[candidate?.userId].send(JSON.stringify({type: 'endCall'}))
         }
 
     } catch (err) {
-        console.log('handleEndCall err: ', err)
+        handleException(ws, 'END_CALL', err, {})
     }
 }
 
-const handleGetpairOfPeers = ({ws}) => {
+const handleGetRooms = ({ws}) => {
     try {
         
         const data = {}
-        for(let item in pairOfPeers) {
-            data[item] = Object.keys(pairOfPeers[item])
+        for(let item in rooms) {
+            data[item] = Object.keys(rooms[item])
         }
-        ws.send(JSON.stringify({type: 'pairOfPeersList', data}))
+        ws.send(JSON.stringify({type: 'roomsList', data}))
     } catch (err) {
-        console.log('handleGetpairOfPeers err: ', err)
+ 
+        handleException(ws, 'GET_ROOMS', err, {})
     }
 }
 
 
-const actions = {
+export const actions = {
     'ADD_USER': handleAddUser,
     'OFFER': handleOffer, 
     'ANSWER': handleAnswer, 
@@ -306,15 +309,16 @@ const actions = {
     'MUTE_VOICE': handleMuteVoice,
     'RELOAD': handleReloadUser,
     'END_CALL': handleEndCall,
-    'GET_pairOfPeers': handleGetpairOfPeers
+    'GET_ROOMS': handleGetRooms
   };
 
 
-export const parseMessage = (message) => {
+export const parseMessage = (data) => {
     try {
       
-      const { route: action, ...data } = JSON.parse(message.toString());
-      return { currAction: actions[action], data };
+      const { route, ...somethingData } = JSON.parse(data.toString());
+
+      return { currAction: actions[route], ...somethingData };
     } catch (err) {
       console.error('Parse error - ', err);
       return () => {};
