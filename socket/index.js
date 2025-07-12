@@ -3,7 +3,7 @@
 import {WebSocketServer} from "ws";
 import dotenv from 'dotenv'
 import { parseMessage } from "./parse.js";
-import { removeUser } from "../users/index.js";
+import { removePair, removeUser } from "../users/index.js";
 dotenv.config()
 
 
@@ -28,6 +28,7 @@ webSocket.on('connection', (ws) => {
 
     ws.on('close', () => {
       // removeUser({ws})
+      removePair({ ws, userId: ws.userId })
       removeUser(ws)
       console.log('Leave user', ws.userId)
     });
