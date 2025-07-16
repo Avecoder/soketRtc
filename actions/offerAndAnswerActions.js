@@ -34,6 +34,7 @@ export const handleOffer = ({ ws, candidateId, userId, isUpdate = false, ...data
               // принимающий вызов
             peer2 = users[candidateId]; 
 
+
             
 
             // Дополнительно проверяем, что оба пользователя найдены в системе
@@ -101,8 +102,11 @@ export const handleDecline = ({ ws, userId }) => {
         const peer1 = users[peer2.candidate];
         if (!peer1) throw new Error('Offer user not found');
 
+        const checkPair = getPair({ws, userId})
         // Отправляем инициатору вызова сообщение об отклонении
-        sendMessage('/decline', peer1, { name: peer2.name });
+        if(checkPair) {
+            sendMessage('/decline', peer1, { name: peer2.name });
+        }
         removePair({ ws, userId })
     } catch (err) {
         handleException(ws ?? users[userId]?.ws ?? null, 'DECLINE', err, {});
