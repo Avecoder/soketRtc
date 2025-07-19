@@ -1,6 +1,6 @@
-import { users } from "../users/index.js";
+import { isSendingOnePeers, users } from "../users/index.js";
 import { handleException } from "../logger/sendError.js";
-import { sendMessage } from "../socket/send.js";
+import { formData } from "../socket/send.js";
 
 
 /**
@@ -14,16 +14,19 @@ import { sendMessage } from "../socket/send.js";
  */
 export const broadcast = ({ userId, type, data = {} }) => {
     try {
-        if (!userId) throw new Error('UserId is required');
+        if(!userId) throw new Error('userId is required');
 
-        const me = users[userId];
+        
+        const me = isSendingOnePeers(users[userId])
         if (!me) throw new Error('Me not found');
 
         const candidate = users[me.candidate];
+        const candidateActive = isSendingOnePeers(candidate)
         if (!candidate) throw new Error('Candidate not found');
 
-        sendMessage(type, me, data);
-        sendMessage(type, candidate, data);
+        me.ws.send(formData(type, data))
+        candidateActive.ws.send(formData(type, data))
+
     } catch (err) {
         handleException(users[userId]?.ws, 'broadcast', err, data);
     }

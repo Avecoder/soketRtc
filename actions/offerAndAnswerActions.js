@@ -1,7 +1,7 @@
 import { handleException } from "../logger/sendError.js"
 import { broadcast } from "../socket/broadcast.js";
 import { sendMessage } from "../socket/send.js";
-import { setPair, users, getPair, pairOfPeers, removePair } from "../users/index.js";
+import { setPair, users, getPair, pairOfPeers, removePair, updateStatus, isSendingOnePeers } from "../users/index.js";
 
 
 
@@ -16,73 +16,78 @@ import { setPair, users, getPair, pairOfPeers, removePair } from "../users/index
  * @param {Object} params.data - Дополнительные данные offer'а (SDP, флаги и т.д.).
  * @param {Boolean} params.isUpdate - Для обновления offer sdp
  */
-export const handleOffer = ({ ws, candidateId, userId, isUpdate = false, ...data }) => {
+export const handleOffer = ({ ws, candidateId, userId, isUpdate = false, retry = false, ...data }) => {
     try {
         // Проверяем наличие обязательных параметров
-        
+
         if (!userId) throw new Error("<b>userId</b> is required");
         let peer1 = users[userId]
-        if (!peer1) throw new Error('User not found');
+        const peerWs1 = peer1.get(ws)
+        if (!peerWs1) throw new Error('User not found');
+        updateStatus(ws, 'calling')
 
         let peer2 = null
 
+
         const checkPair = getPair({ws, userId})
+
+        
+        // Получаем объекты пользователей        
+    
+        peer2 = users[candidateId]; 
+
         
         if(!isUpdate) {
-            if (!candidateId) throw new Error("<b>candidateId</b> is required");
-            // Получаем объекты пользователей        // вызывающий
-              // принимающий вызов
-            peer2 = users[candidateId]; 
-
-
-            
-
             // Дополнительно проверяем, что оба пользователя найдены в системе
-            
+            if (!candidateId) throw new Error("<b>candidateId</b> is required");
             if (!peer2) {
-                // Если второй пользователь не найден — уведомляем первого, что кандидат недоступен
-                sendMessage('/unavailable', ws, {})
-                return;
+                    // Если второй пользователь не найден — уведомляем первого, что кандидат недоступен
+                    sendMessage('/unavailable', ws, {})
+                    return;
             }
         } else {
             peer2 = users[checkPair];
             if(!peer2) throw new Error('Peer2 not found');
         }
 
-        if(checkPair && !isUpdate) {
-            sendMessage('/busy', ws)
+        const peerData2 = isSendingOnePeers(peer2)
+        if((checkPair && !isUpdate) || peerData2.status == 'ended') {
+            sendMessage('/busy', peer1)
             return;
         }
+
+
 
         if(isUpdate) {
             sendMessage('/updateOffer', peer2, {
                 ...data
             })
-            
         } else {
-            peer1.candidate = candidateId;
-            peer2.candidate = userId;
+            
+            for(const [_, p] of peer1) {
+                p.candidate = candidateId;
+            }
+            for(const [_, p] of peer2) {
+                p.candidate = userId;
+            }
 
             sendMessage('/call', peer2, {
                 ...data, // например, SDP offer, reconnect-флаг и т.п.
                 userId,
-                name: peer1.name, // имя вызывающего (раньше было offerUser — возможно, ошибка)
-                photo: peer1.photo, // имя вызывающего (раньше было offerUser — возможно, ошибка)
-                candidateId: userId
+                name: peerWs1.name, // имя вызывающего (раньше было offerUser — возможно, ошибка)
+                photo: peerWs1.photo, // имя вызывающего (раньше было offerUser — возможно, ошибка)
+                candidateId: userId,
+                device: peerWs1.device
             });
         }
         // Устанавливаем ссылки на кандидатов друг у друга
-        
-
-        sendMessage('/remoteStreamsId', peer2, {streamIds: peer1.streamIds})
+        sendMessage('/remoteStreamsId', peer2, {streamIds: peerWs1.streamIds})
 
     } catch (err) {
         // Обрабатываем ошибку через централизованную функцию логирования
         handleException(ws, 'OFFER', err, data);
     }
 };
-
-
 
 /**
  * Обрабатывает отклонение вызова пользователем.
@@ -97,23 +102,46 @@ export const handleDecline = ({ ws, userId }) => {
         if (!userId) throw new Error('userId is required');
 
         const peer2 = users[userId];
+        const peerWs2 = peer2.get(ws)
         if (!peer2) throw new Error('Peer2 user not found');
 
-        const peer1 = users[peer2.candidate];
+        const peer1 = users[peerWs2.candidate];
         if (!peer1) throw new Error('Offer user not found');
 
-        const checkPair = getPair({ws, userId})
-        // Отправляем инициатору вызова сообщение об отклонении
-        if(checkPair) {
-            sendMessage('/decline', peer1, { name: peer2.name });
+
+        const peerData1 = isSendingOnePeers(peer1)
+        
+
+        if(peerData1.status == 'ended' ) {
+            return;
+        } 
+
+        // Еслиу у нас ended, то только мы можем его исправить
+        if(peerWs2.status == 'ended') {
+            updateStatus(ws, 'idle')
+            return
         }
+
+
+        updateStatus(ws, 'idle')
+        sendMessage('/decline', peer1, { name: peerWs2.name });
+
+        if(peerData1.status !== 'ended') {
+            updateStatus(peerData1.ws, 'ended')
+        }
+
+        
+
         removePair({ ws, userId })
+        
     } catch (err) {
         handleException(ws ?? users[userId]?.ws ?? null, 'DECLINE', err, {});
     }
 };
 
 
+// 1 raz мы можем только дать ended 2 peery
+// ended mi ne posilaem voice
 
 /**
  * Обрабатывает ответ (answer) на offer от пользователя и завершает установку P2P-соединения.
@@ -125,33 +153,36 @@ export const handleDecline = ({ ws, userId }) => {
  */
 export const handleAnswer = ({ answer, userId, ws, isUpdate }) => {
     try {
+
         // Получаем пользователя, который отправил answer
         if(!userId) throw new Error('userId not found')
         const peer2 = users[userId];
+        const peerWs2 = peer2?.get(ws)
 
-        const candidateId = peer2?.candidate
+        updateStatus(ws, 'ringing')
+        const candidateId = peerWs2.candidate
         if(!candidateId) throw new Error('candidateId not found')
 
         // Получаем пользователя, который изначально отправил offer (то есть кандидат)
         const peer1 = users[candidateId];
+  
 
         // Проверяем, что оба пользователя существуют
         if (!peer2) throw new Error('Peer2 not found');
         if (!peer1) throw new Error('Peer1 not found');
 
-        sendMessage('/remoteStreamsId', peer1, {streamIds: peer2.streamIds})
-        
+        sendMessage('/remoteStreamsId', peer1, {streamIds: peerWs2.streamIds})
 
         if(isUpdate) {
             sendMessage('/updateAnswer', peer1, {answer})
             broadcast({ userId, type: '/updateIce' });
         } else {
             setPair({userId, candidateId, ws})
-            sendMessage('/acceptCall', peer1, {answer})
+            console.log('ACCEPT')
+            sendMessage('/acceptCall', peer1, {answer, device: peerWs2.device})
             // Рассылаем другим участникам (если нужно), что соединение установлено
             broadcast({ userId, type: '/connect' });
         }
-        
         
     } catch (err) {
         // Обрабатываем ошибку централизованно

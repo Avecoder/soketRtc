@@ -9,7 +9,7 @@ import { handleException } from "../logger/sendError.js"
  * @param {string} params.kind - Тип трека ('audio' или 'video').
  * @param {string} params.trackId - ID трека, который нужно сохранить.
  */
-export const handleSetRemoteStreamId = ({ userId, kind, streamId }) => {
+export const handleSetRemoteStreamId = ({ws,  userId, kind, streamId }) => {
   try {
     // Проверяем наличие обязательных параметров
     if (!userId) throw new Error('userId is required')
@@ -20,7 +20,7 @@ export const handleSetRemoteStreamId = ({ userId, kind, streamId }) => {
     if (!users[userId]) throw new Error('peer1 not found')
 
     // Сохраняем ID трека по типу ('audio' или 'video') в объекте пользователя
-    users[userId].streamIds[kind] = streamId
+    users[userId].get(ws).streamIds[kind] = streamId
 
   } catch (err) {
     // В случае ошибки логируем исключение и отправляем информацию о ней

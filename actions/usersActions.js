@@ -3,22 +3,38 @@ import { users } from "../users/index.js"
 
 
 
-export const handleAddUser = ({ws, userId, name, photo = ""}) => {
+export const handleAddUser = ({ ws, userId, name, photo = "", device = 'mobile' }) => {
     try {
+        if (!userId) throw new Error("<b>userId</b> is required");
 
-        if(!userId) throw new Error("<b>userId</b> is required")
-
-        if(userId) {
-            users[userId] = ws;
-            users[userId].name = name;
-            users[userId].candidateIce = null;
-            users[userId].muted = false;
-            users[userId].statusConnect = 'active'
-            users[userId].photo = photo
-            users[userId].streamIds = {};
-            ws.userId = userId
+        if (!users[userId]) {
+            users[userId] = new Map();
         }
-    } catch(err) {
-       handleException(ws, 'ADD_USER', err, {userId, name})
+
+        const userData = {
+            ws,
+            userId,
+            name,
+            photo,
+            device,
+            candidateIce: null,
+            muted: false,
+            status: 'idle', 
+            // idle - Пользователь не в звонке
+            // calling - Исходящий вызов (ожидает ответа)
+            // ringing - Входящий вызов (ожидает ответа)
+            // in_call - Пользователь в активном звонке
+            // ended - Звонок завершился, но еще не сброшено состояние
+            streamIds: {},
+        };
+
+        users[userId].set(ws, userData);
+        ws.userId = userId;
+
+    } catch (err) {
+        handleException(ws, 'ADD_USER', err, { userId, name });
     }
-}
+};
+
+
+

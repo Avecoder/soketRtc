@@ -1,4 +1,5 @@
 import { handleException } from "../logger/sendError.js"
+import { sendMessage } from "../socket/send.js";
 
 
 
@@ -75,6 +76,8 @@ export const setPair = ({ userId, candidateId, ws }) => {
       delete pairOfPeers[peerId];
   
       return true;
+
+      
   
     } catch (err) {
       handleException(ws, 'REMOVE_PAIR', `problem removing peer pair: ${err.message}`, {});
@@ -97,4 +100,28 @@ export const removeUser = (ws) => {
         handleException(ws, 'REMOVE_USER', `problem removing user: ${err.message}`, {});
         return false
       }
+}
+
+
+export const isSendingOnePeers = (sender) => {
+  try {
+    
+    const user = Array.from(sender).find(([_, user]) => user.status !== 'idle')
+    if(user && user.length) return user[1]
+    else return false
+  } catch (err) {
+    return false
+  }
+}
+
+export const updateStatus = (ws, status = 'idle') => {
+  try {
+    const user = users[ws.userId].get(ws);
+    user.status = status
+    sendMessage('/status', users[ws.userId], {status})
+  } catch (err) {
+    console.log(err)
+    handleException(ws, 'isSendingAllPeers', `Problem checking peer status: ${err.message}`, {});
+    return false
+  }
 }

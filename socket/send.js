@@ -5,6 +5,10 @@
  * - sendMessage
  */
 
+import { isSendingOnePeers } from "../users/index.js"
+
+
+export const formData = (route = '/', data = {}) => JSON.stringify({type: route.split('/')[1], ...data})
 
 /**
  * Отправляет сообщение по заданному маршруту через указанного отправителя.
@@ -18,7 +22,20 @@
  * // Отправит: { type: 'call', id: 123 }
  */
 export const sendMessage = (route = '/', sender, data = {}) => {
-    const sendedData = JSON.stringify({type: route.split('/')[1], ...data})
-    console.log(sendedData)
-    sender.send(sendedData)
-}
+    try {
+        const sendedData = formData(route, data)
+        const user = isSendingOnePeers(sender, route)
+    
+
+        if(user) {
+            user.ws.send(sendedData)
+        } else {
+            for (const [_, value] of sender) {
+                value.ws.send(sendedData)
+            }
+        }
+        
+    } catch(err) {
+        console.log(`send error [${route}]: `, err)
+    }
+} 
