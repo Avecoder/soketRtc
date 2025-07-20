@@ -1,6 +1,6 @@
 import { handleException } from "../logger/sendError.js"
 import { broadcast } from "../socket/broadcast.js";
-import { sendMessage } from "../socket/send.js";
+import { sendCancelMessage, sendMessage } from "../socket/send.js";
 import { setPair, users, getPair, pairOfPeers, removePair, updateStatus, isSendingOnePeers, pushInWaitingList } from "../users/index.js";
 
 
