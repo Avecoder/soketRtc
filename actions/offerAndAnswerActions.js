@@ -207,7 +207,7 @@ export const handleAnswer = ({ answer, userId, ws, isUpdate }) => {
         } else {
             setPair({userId, candidateId, ws})
             sendMessage('/acceptCall', peer1, {answer, device: peerWs2.device})
-            sendCancelMessage(peer1)
+            sendCancelMessage(peer2)
             // Рассылаем другим участникам (если нужно), что соединение установлено
             broadcast({ userId, type: '/connect' });
         }
