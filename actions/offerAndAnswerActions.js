@@ -154,7 +154,7 @@ export const handleDecline = ({ ws, userId }) => {
 
         updateStatus(ws, 'idle')
         sendMessage('/decline', peer1, { name: peerWs2.name });
-        sendCancelMessage()
+        sendCancelMessage(peer1)
 
         if(peerData1.status !== 'ended') {
             updateStatus(peerData1.ws, 'ended')
@@ -207,7 +207,7 @@ export const handleAnswer = ({ answer, userId, ws, isUpdate }) => {
         } else {
             setPair({userId, candidateId, ws})
             sendMessage('/acceptCall', peer1, {answer, device: peerWs2.device})
-            sendCancelMessage()
+            sendCancelMessage(peer1)
             // Рассылаем другим участникам (если нужно), что соединение установлено
             broadcast({ userId, type: '/connect' });
         }
