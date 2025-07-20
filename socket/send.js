@@ -17,20 +17,22 @@ export const formData = (route = '/', data = {}) => JSON.stringify({type: route.
  * @param {Object} sender - Объект с методом `.send`, например WebSocket или любой другой транспорт.
  * @param {Object} [data={}] - Дополнительные данные, которые будут включены в сообщение.
  *
- * @example
+ * @example 
  * sendMessage('/call', ws, { id: 123 });
  * // Отправит: { type: 'call', id: 123 }
  */
 export const sendMessage = (route = '/', sender, data = {}) => {
     try {
         const sendedData = formData(route, data)
-        const user = isSendingOnePeers(sender, route)
+        const user = isSendingOnePeers(sender, route) 
     
+        console.log(`[SENDED] [${route}]: `, JSON.stringify(data))
 
         if(user) {
             user.ws.send(sendedData)
         } else {
             for (const [_, value] of sender) {
+                console.log('[BROADCAST]: ', value.userId)
                 value.ws.send(sendedData)
             }
         }

@@ -5,6 +5,10 @@ import { sendMessage } from "../socket/send.js";
 
 export const users = {}
 export const pairOfPeers = {}
+export const waitingList = {}
+
+
+
 
 
 /**
@@ -102,6 +106,30 @@ export const removeUser = (ws) => {
       }
 }
 
+export const pushInWaitingList = (candidateId, {...data}) => {
+  try {
+    waitingList[candidateId] = {...data, addedAt: Date.now()}
+  } catch (err) {
+    console.error('pushInWaitingList error: ', err)
+  }
+}
+
+export const removeFromWaitingList = ({userId}) => {
+  try {
+    delete waitingList[userId]
+  } catch (err) {
+    console.error('removeFromWaitingList error: ', err)
+  }
+}
+
+export const getFromWaitingList = ({userId}) => {
+  try {
+    return waitingList[userId];
+  } catch (err) {
+    console.error('getFromWaitingList error: ', err)
+  }
+}
+
 
 export const isSendingOnePeers = (sender) => {
   try {
@@ -110,6 +138,7 @@ export const isSendingOnePeers = (sender) => {
     if(user && user.length) return user[1]
     else return false
   } catch (err) {
+    console.log(err)
     return false
   }
 }
@@ -118,10 +147,32 @@ export const updateStatus = (ws, status = 'idle') => {
   try {
     const user = users[ws.userId].get(ws);
     user.status = status
-    sendMessage('/status', users[ws.userId], {status})
   } catch (err) {
     console.log(err)
-    handleException(ws, 'isSendingAllPeers', `Problem checking peer status: ${err.message}`, {});
+    handleException(ws, 'updateStatus', `Problem checking peer status: ${err.message}`, {});
     return false
   }
 }
+
+
+// Очистка пиров
+const EXPIRATION_TIME = 60 * 1000; // 1 минута
+const CLEANUP_INTERVAL = 10 * 1000; // 10 секунд
+
+setInterval(() => {
+  const now = Date.now();
+  for (const userId in waitingList) {
+    const user = waitingList[userId];
+    if (now - user.addedAt > EXPIRATION_TIME) {
+      console.log(`User ${userId} removed from waitingList after timeout.`);
+      
+      // Уведомляем пира, который названивает
+      const userWhoCallsId = waitingList[userId].candidateId;
+      const userWhoCalls = users[userWhoCallsId]
+
+      sendMessage('/decline', userWhoCalls);
+
+      delete waitingList[userId];
+    }
+  }
+}, CLEANUP_INTERVAL);
