@@ -41,3 +41,18 @@ export const sendMessage = (route = '/', sender, data = {}) => {
         console.log(`send error [${route}]: `, err)
     }
 } 
+
+export const sendCancelMessage = (sender) => {
+    try {
+        const sendedData = formData('/cancel', {})
+
+        for (const [_, value] of sender) {
+            if(value.status == 'idle') {
+                console.log('[CANCEL]: ', value.userId)
+                value.ws.send(sendedData)
+            }
+        }
+    } catch (err) {
+        console.log('send cancel error: ', err)
+    }
+}
