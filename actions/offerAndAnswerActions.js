@@ -154,7 +154,7 @@ export const handleDecline = ({ ws, userId }) => {
 
         updateStatus(ws, 'idle')
         sendMessage('/decline', peer1, { name: peerWs2.name });
-        sendCancelMessage(peer1)
+        sendCancelMessage(peer2)
 
         if(peerData1.status !== 'ended') {
             updateStatus(peerData1.ws, 'ended')
