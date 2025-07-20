@@ -47,8 +47,9 @@ export const sendCancelMessage = (sender) => {
         const sendedData = formData('/cancel', {})
 
         for (const [_, value] of sender) {
+            console.log('[CANCEL]: ', value.userId, value.status)
             if(value.status == 'idle') {
-                console.log('[CANCEL]: ', value.userId)
+                
                 value.ws.send(sendedData)
             }
         }
