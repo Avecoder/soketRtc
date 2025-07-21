@@ -101,7 +101,7 @@ export const handleOffer = ({ ws, candidates, userId, isUpdate = false, retry = 
             for(const [_, p] of peer2) {
                 p.candidate = userId;
 
-                updateStatus(p.ws, 'ringing')
+                
             }
             console.log('[SET VALUE]: ', peer2)
             sendMessage('/call', peer2, {
@@ -141,6 +141,8 @@ export const handleDecline = ({ ws, userId }) => {
         const peerWs2 = peer2.get(ws);
         if (!peerWs2) throw new Error('Peer connection not found for ws');
 
+        updateStatus(ws, 'ringing')
+
         console.log(peerWs2.candidate)
         const peer1 = users[peerWs2.candidate];
         if (!peer1) {
@@ -160,7 +162,6 @@ export const handleDecline = ({ ws, userId }) => {
         // Обновить вызывающего юзера в idle, даже если второй уже в ended
         updateStatus(ws, 'idle');
 
-        console.log('[STATUS]: ', peerData1?.status)
         if (peerData1.status !== 'ended' && peerData1.status !== 'idle') {
             sendMessage('/decline', peer1, { name: peerWs2.name });
             updateStatus(peerData1.ws, 'ended', peerData1.userId);
