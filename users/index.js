@@ -97,7 +97,12 @@ export const removeUser = (ws) => {
 
         removePair({userId, ws});
 
-        delete users[userId];
+        if(users[userId].size = 1) {
+          delete users[userId];
+        } else {
+          users[userId].delete(ws);
+        }
+        
 
         return true
       } catch (err) {
