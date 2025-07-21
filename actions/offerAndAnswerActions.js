@@ -28,12 +28,12 @@ const mapPeers = (peers , callback = () => {}) => {
 export const handleOffer = ({ ws, candidates, userId, isUpdate = false, retry = false, ...data }) => {
     try {
 
-        console.log('[OFFER]: ',Object.keys(users))
         if (!userId) throw new Error("userId is required");
         let peer1 = users[userId]
         const peerWs1 = peer1.get(ws)
         if (!peerWs1) throw new Error('User not found');
         updateStatus(ws, 'calling')
+        
 
         let peer2 = null
         let candidateId = null
@@ -49,6 +49,7 @@ export const handleOffer = ({ ws, candidates, userId, isUpdate = false, retry = 
             })
         } else {
             peer2 = users[candidates]; 
+            candidateId = candidates;
         }
         
         
@@ -93,12 +94,16 @@ export const handleOffer = ({ ws, candidates, userId, isUpdate = false, retry = 
             })
         } else {
             
+            
             for(const [_, p] of peer1) {
                 p.candidate = candidateId;
             }
             for(const [_, p] of peer2) {
                 p.candidate = userId;
+
+                updateStatus(p.ws, 'ringing')
             }
+            console.log('[SET VALUE]: ', peer2)
             sendMessage('/call', peer2, {
                 ...data, // например, SDP offer, reconnect-флаг и т.п.
                 userId,
@@ -131,41 +136,44 @@ export const handleDecline = ({ ws, userId }) => {
         if (!userId) throw new Error('userId is required');
 
         const peer2 = users[userId];
-        const peerWs2 = peer2.get(ws)
         if (!peer2) throw new Error('Peer2 user not found');
 
+        const peerWs2 = peer2.get(ws);
+        if (!peerWs2) throw new Error('Peer connection not found for ws');
+
+        console.log(peerWs2.candidate)
         const peer1 = users[peerWs2.candidate];
-        if (!peer1) console.log('[DECLINE]: Offer user not found');
-
-
-        const peerData1 = isSendingOnePeers(peer1)
-        
-
-        if(peerData1.status == 'ended' ) {
+        if (!peer1) {
+            console.log('[DECLINE]: Offer user not found');
+            updateStatus(ws, 'idle'); // хотя бы себя отпустить
             return;
-        } 
-
-        // Еслиу у нас ended, то только мы можем его исправить
-        if(peerWs2.status == 'ended') {
-            updateStatus(ws, 'idle')
-            return
         }
 
+        const peerData1 = isSendingOnePeers(peer1);
 
-        updateStatus(ws, 'idle')
-        sendMessage('/decline', peer1, { name: peerWs2.name });
-        sendCancelMessage(peer2)
-
-        if(peerData1.status !== 'ended') {
-            updateStatus(peerData1.ws, 'ended')
+        // Если текущий юзер уже в ended — просто вернуть себе idle
+        if (peerWs2.status === 'ended') {
+            updateStatus(ws, 'idle');
+            return;
         }
 
-        removePair({ ws, userId })
-        
+        // Обновить вызывающего юзера в idle, даже если второй уже в ended
+        updateStatus(ws, 'idle');
+
+        console.log('[STATUS]: ', peerData1?.status)
+        if (peerData1.status !== 'ended' && peerData1.status !== 'idle') {
+            sendMessage('/decline', peer1, { name: peerWs2.name });
+            updateStatus(peerData1.ws, 'ended', peerData1.userId);
+        }
+
+        sendCancelMessage(peer2);
+        removePair({ ws, userId });
+
     } catch (err) {
         handleException(ws ?? users[userId]?.ws ?? null, 'DECLINE', err, {});
     }
 };
+
 
 
 // 1 raz мы можем только дать ended 2 peery
@@ -187,7 +195,7 @@ export const handleAnswer = ({ answer, userId, ws, isUpdate }) => {
         const peer2 = users[userId];
         const peerWs2 = peer2?.get(ws)
 
-        updateStatus(ws, 'ringing')
+        
         const candidateId = peerWs2.candidate
         if(!candidateId) throw new Error('candidateId not found')
 

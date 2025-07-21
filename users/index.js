@@ -143,9 +143,9 @@ export const isSendingOnePeers = (sender) => {
   }
 }
 
-export const updateStatus = (ws, status = 'idle') => {
+export const updateStatus = (ws, status = 'idle', userId = '0') => {
   try {
-    const user = users[ws.userId].get(ws);
+    const user = users[ws.userId ?? userId].get(ws);
     user.status = status
   } catch (err) {
     console.log(err)
