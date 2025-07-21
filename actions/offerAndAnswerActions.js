@@ -141,9 +141,8 @@ export const handleDecline = ({ ws, userId }) => {
         const peerWs2 = peer2.get(ws);
         if (!peerWs2) throw new Error('Peer connection not found for ws');
 
-        updateStatus(ws, 'ringing')
+        
 
-        console.log(peerWs2.candidate)
         const peer1 = users[peerWs2.candidate];
         if (!peer1) {
             console.log('[DECLINE]: Offer user not found');
@@ -197,6 +196,8 @@ export const handleAnswer = ({ answer, userId, ws, isUpdate }) => {
         const peerWs2 = peer2?.get(ws)
 
         
+
+        
         const candidateId = peerWs2.candidate
         if(!candidateId) throw new Error('candidateId not found')
 
@@ -214,6 +215,7 @@ export const handleAnswer = ({ answer, userId, ws, isUpdate }) => {
             sendMessage('/updateAnswer', peer1, {answer})
             broadcast({ userId, type: '/updateIce' });
         } else {
+            updateStatus(ws, 'ringing')
             setPair({userId, candidateId, ws})
             sendMessage('/acceptCall', peer1, {answer, device: peerWs2.device})
             sendCancelMessage(peer2)

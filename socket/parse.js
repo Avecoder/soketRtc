@@ -10,7 +10,7 @@ import { routes } from "../routes.js";
 
 export const parseMessage = (data) => {
     try {
-      console.log(data.toString()) 
+
       const { route, ...somethingData } = JSON.parse(data.toString());
       
       return { currAction: routes[route], ...somethingData };

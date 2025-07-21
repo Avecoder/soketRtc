@@ -26,7 +26,6 @@ export const sendMessage = (route = '/', sender, data = {}) => {
         const sendedData = formData(route, data)
         const user = isSendingOnePeers(sender, route) 
     
-        console.log(`[SENDED] [${route}]: `, JSON.stringify(data))
 
         if(user) {
             user.ws.send(sendedData)
@@ -36,7 +35,6 @@ export const sendMessage = (route = '/', sender, data = {}) => {
                 value.ws.send(sendedData)
             }
         }
-        
     } catch(err) {
         console.log(`send error [${route}]: `, err)
     }
