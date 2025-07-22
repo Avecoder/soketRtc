@@ -40,7 +40,7 @@ export const handleSwap = ({ userId, ws }) => {
         const iceFirstUser = users[userId]
 
         const iceFirstUserData = iceFirstUser.get(ws)
-        
+
         // Получаем ID второго пользователя, с которым первый состоит в паре
         const iceSecondUserId = iceFirstUserData.candidate;
 

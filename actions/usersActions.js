@@ -45,6 +45,7 @@ export const handleAddUser = ({ ws, userId, name, photo = "", device = 'mobile' 
             photo,
             device,
             candidateIce: [],
+            iceParams: [],
             muted: false,
             status: 'idle', 
             // idle - Пользователь не в звонке
