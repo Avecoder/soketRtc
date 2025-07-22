@@ -32,7 +32,7 @@ export const handleOffer = ({ ws, candidates, userId, isUpdate = false, retry = 
         let peer1 = users[userId]
         const peerWs1 = peer1.get(ws)
         if (!peerWs1) throw new Error('User not found');
-        updateStatus(ws, 'calling')
+        
         
 
         let peer2 = null
@@ -103,6 +103,7 @@ export const handleOffer = ({ ws, candidates, userId, isUpdate = false, retry = 
 
                 
             }
+            updateStatus(ws, 'calling')
             console.log('[SET VALUE]: ', peer2)
             sendMessage('/call', peer2, {
                 ...data, // например, SDP offer, reconnect-флаг и т.п.
