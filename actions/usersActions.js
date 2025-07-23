@@ -1,11 +1,15 @@
 import { handleException } from "../logger/sendError.js"
 import { sendMessage } from "../socket/send.js";
-import { users, getFromWaitingList, removeFromWaitingList } from "../users/index.js"
+import { users, getFromWaitingList, removeFromWaitingList, waitingList } from "../users/index.js"
 
 
 
 const checkExistUserInWaitingList = (userId) => {
     try {
+        console.log('[userId]: ',userId)
+        console.log('[list waiting]:', JSON.stringify(waitingList))
+        console.log('[list users]:', JSON.stringify(Object.keys(users)))
+
         const userWaitData = getFromWaitingList({userId});
         console.log('[userWaitData]: ',userWaitData)
         
@@ -60,6 +64,7 @@ export const handleAddUser = ({ ws, userId, name, photo = "", device = 'mobile' 
         users[userId].set(ws, userData);
         ws.userId = userId;
         // console.log(JSON.stringify(users[userId]))
+
 
         checkExistUserInWaitingList(userId)
 
