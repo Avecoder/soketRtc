@@ -28,6 +28,7 @@ const mapPeers = (peers , callback = () => {}) => {
 export const handleOffer = ({ ws, candidates, userId, isUpdate = false, retry = false, ...data }) => {
     try {
 
+        console.log('[OFFER]: ', userId);
         if (!userId) throw new Error("userId is required");
         let peer1 = users[userId]
         const peerWs1 = peer1.get(ws)
