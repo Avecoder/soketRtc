@@ -31,7 +31,7 @@ export const sendMessage = (route = '/', sender, data = {}) => {
             user.ws.send(sendedData)
         } else {
             for (const [_, value] of sender) {
-                console.log('[BROADCAST]: ', value.userId)
+                // console.log('[BROADCAST]: ', value.userId)
                 value.ws.send(sendedData)
             }
         }
@@ -45,7 +45,7 @@ export const sendCancelMessage = (sender) => {
         const sendedData = formData('/cancel', {})
 
         for (const [_, value] of sender) {
-            console.log('[CANCEL]: ', value.userId, value.status)
+            // console.log('[CANCEL]: ', value.userId, value.status)
             if(value.status == 'idle') {
                 
                 value.ws.send(sendedData)

@@ -104,7 +104,7 @@ export const handleOffer = ({ ws, candidates, userId, isUpdate = false, retry = 
                 
             }
             updateStatus(ws, 'calling')
-            console.log('[SET VALUE]: ', peer2)
+            // console.log('[SET VALUE]: ', peer2)
             sendMessage('/call', peer2, {
                 ...data, // например, SDP offer, reconnect-флаг и т.п.
                 userId,
@@ -146,7 +146,7 @@ export const handleDecline = ({ ws, userId }) => {
 
         const peer1 = users[peerWs2.candidate];
         if (!peer1) {
-            console.log('[DECLINE]: Offer user not found');
+            // console.log('[DECLINE]: Offer user not found');
             updateStatus(ws, 'idle'); // хотя бы себя отпустить
             return;
         }
@@ -196,7 +196,7 @@ export const handleAnswer = ({ answer, userId, ws, isUpdate }) => {
         const peer2 = users[userId];
         const peerWs2 = peer2?.get(ws)
 
-        
+        // console.log('[userID answer]: ', userId)
 
         
         const candidateId = peerWs2.candidate

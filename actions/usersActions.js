@@ -7,12 +7,13 @@ import { users, getFromWaitingList, removeFromWaitingList } from "../users/index
 const checkExistUserInWaitingList = (userId) => {
     try {
         const userWaitData = getFromWaitingList({userId});
-        console.log(JSON.stringify(userWaitData))
+        console.log('[userWaitData]: ',userWaitData)
         
 
         if(!userWaitData) return;
 
         const peer2 = users[userId] // Отвечающий пир
+        console.log('[peer2]: ',peer2)
 
         for(const [_, p] of peer2) {
             p.candidate = userWaitData.candidateId;
