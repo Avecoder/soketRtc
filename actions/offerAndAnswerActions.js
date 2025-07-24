@@ -133,6 +133,7 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
                 candidateId: userId,
                 device: peerWs1.device
             }); 
+            sendBroadcast(`SENDED CALL WITHOUT WAITING LIST ...`)
         }
         // Устанавливаем ссылки на кандидатов друг у друга
         sendMessage('/remoteStreamsId', peer2, {streamIds: peerWs1.streamIds})
