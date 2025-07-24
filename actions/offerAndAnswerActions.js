@@ -30,9 +30,9 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
     try {
 
         console.log('[OFFER]: ', userId);
+        const {offer, ...someThingData} = data
         sendBroadcast(`[OFFER]: ${userId}`)
-        sendBroadcast(`[CANDIDATES]: ${candidates}`)
-        sendBroadcast(`[CANDIDATE_ID]: ${oldId}`)
+        sendBroadcast(`[SOMETHING DATA]: ${JSON.stringify(someThingData)}`)
         if (!userId) throw new Error("userId is required");
         let peer1 = users[userId]
         const peerWs1 = peer1.get(ws)
