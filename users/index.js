@@ -116,7 +116,7 @@ export const pushInWaitingList = (candidateId, {...data}) => {
   try {
     waitingList[candidateId] = {...data, addedAt: Date.now()}
     sendBroadcast(`[PUSHING USER]: ${JSON.stringify(waitingList[candidateId])}`)
-    sendBroadcast(`[WAITING LIST LENGTH]: ${waitingList.size}`)
+    sendBroadcast(`[WAITING LIST LENGTH]: ${Object.keys(waitingList).length}`)
 
   } catch (err) {
     console.error('pushInWaitingList error: ', err)
