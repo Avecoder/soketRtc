@@ -18,13 +18,18 @@ const checkExistUserInWaitingList = (userId) => {
 
         const userWaitData = getFromWaitingList({userId});
 
-        sendBroadcast(`[userWaitData]: ${JSON.stringify(userWaitData).slice(0, 500)}`)
+       
         
 
         if(!userWaitData) return;
 
+        sendBroadcast(`[userWaitData]: ${JSON.stringify(userWaitData).slice(0, 500)}`)
+
         const peer2 = users[userId] // Отвечающий пир
 
+        if(!peer2) return;
+
+        
         sendBroadcast(`[peer2]: ${JSON.stringify(peer2).slice(0, 500)}`)
 
         for(const [_, p] of peer2) {
