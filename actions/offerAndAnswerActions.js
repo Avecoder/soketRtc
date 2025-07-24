@@ -56,6 +56,8 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
             peer2 = users[candidates]; 
             candidateId = candidates;
         }
+
+        sendBroadcast(`[FOUND PEER2]: ${peer2}`)
         
         
         if(!isUpdate) {            
