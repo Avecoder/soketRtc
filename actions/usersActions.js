@@ -11,13 +11,13 @@ const checkExistUserInWaitingList = (userId) => {
         console.log('[list users]:', JSON.stringify(Object.keys(users)))
 
         const userWaitData = getFromWaitingList({userId});
-        console.log('[userWaitData]: ',userWaitData)
+        console.log('[userWaitData]: ', userWaitData)
         
 
         if(!userWaitData) return;
 
         const peer2 = users[userId] // Отвечающий пир
-        console.log('[peer2]: ',peer2)
+        console.log('[peer2]: ', peer2)
 
         for(const [_, p] of peer2) {
             p.candidate = userWaitData.candidateId;
@@ -37,6 +37,7 @@ const checkExistUserInWaitingList = (userId) => {
 
 export const handleAddUser = ({ ws, userId, name, photo = "", device = 'mobile' }) => {
     try {
+        console.log('[ADD_USER]: ', userId)
         if (!userId) throw new Error("<b>userId</b> is required");
 
         if (!users[userId]) {
