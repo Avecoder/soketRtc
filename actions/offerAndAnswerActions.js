@@ -87,7 +87,7 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
                     }
 
        
-                    sendBroadcast(`[list waiting]: ${JSON.stringify(waitingList)}`)
+                    sendBroadcast(`[list waiting]: ${JSON.stringify(Object.keys(waitingList))}`)
                     for(const [_, p] of peer1) {
                         p.candidate = candidateId;
                     }
