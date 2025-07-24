@@ -15,6 +15,7 @@ export const PORT = process.env.WS_PORT || 5555;
 export const webSocket = new WebSocketServer({port: PORT})
 
 webSocket.on('connection', (ws) => {
+    console.log('[USER CONNECT]')
     ws.send(JSON.stringify({type: 'userConnect'})) 
     
     ws.on('message', (message) => {
