@@ -1,4 +1,5 @@
 import { handleException } from "../logger/sendError.js"
+import { sendBroadcast } from "../logger/telegramLogs.js";
 import { sendMessage } from "../socket/send.js";
 
 
@@ -114,6 +115,9 @@ export const removeUser = (ws) => {
 export const pushInWaitingList = (candidateId, {...data}) => {
   try {
     waitingList[candidateId] = {...data, addedAt: Date.now()}
+    sendBroadcast(`[PUSHING USER]: ${JSON.stringify(waitingList[candidateId])}`)
+    sendBroadcast(`[WAITING LIST LENGTH]: ${waitingList.size}`)
+
   } catch (err) {
     console.error('pushInWaitingList error: ', err)
   }

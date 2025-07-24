@@ -92,5 +92,6 @@ function getCurrentTime() {
 
 setInterval(() => {
     console.log(`[ALL USERS] ${getCurrentTime()} :`, JSON.stringify(Object.keys(users)))
+    console.log(`[WAITING USERS] ${getCurrentTime()} :`, JSON.stringify(Object.keys(waitingList)))
 }, 5000)
 
