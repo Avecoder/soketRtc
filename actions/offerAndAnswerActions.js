@@ -30,6 +30,7 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
     try {
 
 
+        console.log(candidates, 'is array: ', Array.isArray(candidates))
         sendBroadcast(`[OFFER]: ${userId}`)
         sendBroadcast(`[candidates]: ${candidates}`)
         if (!userId) throw new Error("userId is required");
@@ -102,7 +103,7 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
         }
 
         const peerData2 = isSendingOnePeers(peer2)
-        if((checkPair && !isUpdate) || peerData2.status == 'ended') {
+        if((checkPair && !isUpdate) || peerData2.status == 'ended') {    
             sendMessage('/busy', peer1)
             return;
         }
@@ -120,7 +121,6 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
             }
             for(const [_, p] of peer2) {
                 p.candidate = userId;
-
                 
             }
             updateStatus(ws, 'calling')
