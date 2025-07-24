@@ -1,4 +1,5 @@
 import { handleException } from "../logger/sendError.js"
+import { sendBroadcast } from "../logger/telegramLogs.js";
 import { sendMessage } from "../socket/send.js";
 import { users, getFromWaitingList, removeFromWaitingList, waitingList } from "../users/index.js"
 
@@ -7,17 +8,24 @@ import { users, getFromWaitingList, removeFromWaitingList, waitingList } from ".
 const checkExistUserInWaitingList = (userId) => {
     try {
         console.log('[userId]: ',userId)
+        sendBroadcast(`[userId]: ${userId}`)
+
         console.log('[list waiting]:', JSON.stringify(Object.keys(waitingList)))
+        sendBroadcast(`[list waiting]: ${JSON.stringify(Object.keys(waitingList))}`)
+
         console.log('[list users]:', JSON.stringify(Object.keys(users)))
+        sendBroadcast(`[list users]: ${JSON.stringify(Object.keys(users))}`)
 
         const userWaitData = getFromWaitingList({userId});
         console.log('[userWaitData]: ', userWaitData)
+        sendBroadcast(`[userWaitData]: ${userWaitData}`)
         
 
         if(!userWaitData) return;
 
         const peer2 = users[userId] // Отвечающий пир
         console.log('[peer2]: ', peer2)
+        sendBroadcast(`[peer2]: ${peer2}`)
 
         for(const [_, p] of peer2) {
             p.candidate = userWaitData.candidateId;

@@ -1,4 +1,5 @@
 import { handleException } from "../logger/sendError.js"
+import { sendBroadcast } from "../logger/telegramLogs.js";
 import { broadcast } from "../socket/broadcast.js";
 import { sendCancelMessage, sendMessage } from "../socket/send.js";
 import { setPair, users, getPair, pairOfPeers, removePair, updateStatus, isSendingOnePeers, pushInWaitingList, waitingList } from "../users/index.js";
@@ -29,6 +30,7 @@ export const handleOffer = ({ ws, candidates, userId, isUpdate = false, retry = 
     try {
 
         console.log('[OFFER]: ', userId);
+        sendBroadcast(`[OFFER]: ${userId}`)
         if (!userId) throw new Error("userId is required");
         let peer1 = users[userId]
         const peerWs1 = peer1.get(ws)
@@ -71,6 +73,13 @@ export const handleOffer = ({ ws, candidates, userId, isUpdate = false, retry = 
                         candidateId: userId,
                         device: peerWs1.device
                     }))
+                    sendBroadcast(`[PUSHING TO WAITING LIST]: ${JSON.stringify({
+                        userId,
+                        name: peerWs1.name,
+                        photo: peerWs1.photo,
+                        candidateId: userId,
+                        device: peerWs1.device
+                    })}`)
                     if(Array.isArray(candidates)) {
                         for(const c of candidates) {
                             pushInWaitingList(c, waitData)
@@ -80,6 +89,7 @@ export const handleOffer = ({ ws, candidates, userId, isUpdate = false, retry = 
                     }
 
                     console.log('[list waiting]: ', waitingList)
+                    sendBroadcast(`[list waiting]: ${JSON.stringify(waitingList)}`)
                     for(const [_, p] of peer1) {
                         p.candidate = candidateId;
                     }
