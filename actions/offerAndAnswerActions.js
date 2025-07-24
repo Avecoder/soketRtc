@@ -1,7 +1,7 @@
 import { handleException } from "../logger/sendError.js"
 import { broadcast } from "../socket/broadcast.js";
 import { sendCancelMessage, sendMessage } from "../socket/send.js";
-import { setPair, users, getPair, pairOfPeers, removePair, updateStatus, isSendingOnePeers, pushInWaitingList } from "../users/index.js";
+import { setPair, users, getPair, pairOfPeers, removePair, updateStatus, isSendingOnePeers, pushInWaitingList, waitingList } from "../users/index.js";
 
 
 const mapPeers = (peers , callback = () => {}) => {
@@ -78,6 +78,8 @@ export const handleOffer = ({ ws, candidates, userId, isUpdate = false, retry = 
                     } else {
                         pushInWaitingList(candidates, waitData)
                     }
+
+                    console.log('[list waiting]: ', waitingList)
                     for(const [_, p] of peer1) {
                         p.candidate = candidateId;
                     }
