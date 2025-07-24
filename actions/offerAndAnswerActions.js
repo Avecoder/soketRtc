@@ -64,7 +64,13 @@ export const handleOffer = ({ ws, candidates, userId, isUpdate = false, retry = 
                         candidateId: userId,
                         device: peerWs1.device
                     }
-                    console.log('[PUSHING TO WAITING LIST]: ', JSON.stringify(waitData))
+                    console.log('[PUSHING TO WAITING LIST]: ', JSON.stringify({
+                        userId,
+                        name: peerWs1.name,
+                        photo: peerWs1.photo,
+                        candidateId: userId,
+                        device: peerWs1.device
+                    }))
                     if(Array.isArray(candidates)) {
                         for(const c of candidates) {
                             pushInWaitingList(c, waitData)
