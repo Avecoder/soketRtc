@@ -26,11 +26,13 @@ const mapPeers = (peers , callback = () => {}) => {
  * @param {Object} params.data - Дополнительные данные offer'а (SDP, флаги и т.д.).
  * @param {Boolean} params.isUpdate - Для обновления offer sdp
  */
-export const handleOffer = ({ ws, candidates, userId, isUpdate = false, retry = false, ...data }) => {
+export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpdate = false, retry = false, ...data }) => {
     try {
 
         console.log('[OFFER]: ', userId);
         sendBroadcast(`[OFFER]: ${userId}`)
+        sendBroadcast(`[CANDIDATES]: ${candidates}`)
+        sendBroadcast(`[CANDIDATE_ID]: ${oldId}`)
         if (!userId) throw new Error("userId is required");
         let peer1 = users[userId]
         const peerWs1 = peer1.get(ws)
