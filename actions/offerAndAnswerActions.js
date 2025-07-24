@@ -15,6 +15,22 @@ const mapPeers = (peers , callback = () => {}) => {
     }
 }
 
+function parseCandidates(input) {
+    if (Array.isArray(input)) return input;
+  
+    if (typeof input === 'string') {
+      try {
+        const parsed = JSON.parse(input);
+        return Array.isArray(parsed) ? parsed : [parsed];
+      } catch (e) {
+        return [input]; // просто строка, не JSON — оборачиваем в массив
+      }
+    }
+  
+    // если число или другой одиночный тип
+    return [input];
+  }
+
 
 /**
  * Обрабатывает поступившее предложение (offer) для установления P2P-соединения между двумя пользователями.
@@ -47,15 +63,14 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
         const checkPair = getPair({ws, userId})
        
      
-        if(Array.isArray(candidates)) {
-            mapPeers(candidates, (peer, candidate) => {
-                peer2 = peer;
-                candidateId = candidate
-            })
-        } else {
-            peer2 = users[candidates]; 
-            candidateId = candidates;
-        }
+        const candidateList = parseCandidates(candidates);
+
+        console.log('[CANDIDATE LIST]: ', candidateList)
+
+        mapPeers(candidateList, (peer, candidate) => {
+            peer2 = peer;
+            candidateId = candidate;
+        });
 
         sendBroadcast(`[FOUND PEER2]: ${peer2}`)
         
