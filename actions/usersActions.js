@@ -36,6 +36,8 @@ const checkExistUserInWaitingList = (userId) => {
             ...userWaitData
         });
 
+        sendBroadcast(`SENDED CALL ...`)
+
         removeFromWaitingList({userId})
     } catch (err) {
         console.log('[checkExistUserInWaitingList]: ', err)
@@ -45,7 +47,7 @@ const checkExistUserInWaitingList = (userId) => {
 
 export const handleAddUser = ({ ws, userId, name, photo = "", device = 'mobile' }) => {
     try {
-        console.log('[ADD_USER]: ', userId)
+        console.log('[ADD_USER]: ', userId) 
         if (!userId) throw new Error("<b>userId</b> is required");
 
         if (!users[userId]) {
