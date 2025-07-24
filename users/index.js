@@ -98,13 +98,14 @@ export const removeUser = (ws) => {
 
         removePair({userId, ws});
 
-        if(users[userId].size == 1) {
+        console.log('[SIZE]: ', users[userId].size)
+        if(users[userId].size <= 1) {
           delete users[userId];
         } else {
           users[userId].delete(ws);
         }
         
-
+ 
         return true
       } catch (err) {
         handleException(ws, 'REMOVE_USER', `problem removing user: ${err.message}`, {});
