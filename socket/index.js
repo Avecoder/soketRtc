@@ -29,8 +29,8 @@ webSocket.on('connection', (ws) => {
 
     ws.on('close', () => {
       // removeUser({ws})
-      // removePair({ ws, userId: ws.userId })
-      // removeUser(ws)
+      removePair({ ws, userId: ws.userId })
+      removeUser(ws)
       console.log('Leave user', ws.userId)
     });
   });

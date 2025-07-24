@@ -7,7 +7,7 @@ import { users, getFromWaitingList, removeFromWaitingList, waitingList } from ".
 const checkExistUserInWaitingList = (userId) => {
     try {
         console.log('[userId]: ',userId)
-        console.log('[list waiting]:', JSON.stringify(waitingList))
+        console.log('[list waiting]:', JSON.stringify(Object.keys(waitingList)))
         console.log('[list users]:', JSON.stringify(Object.keys(users)))
 
         const userWaitData = getFromWaitingList({userId});
