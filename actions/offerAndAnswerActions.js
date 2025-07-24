@@ -29,7 +29,7 @@ const mapPeers = (peers , callback = () => {}) => {
 export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpdate = false, retry = false, ...data }) => {
     try {
 
-        console.log('[OFFER]: ', userId);
+
         const {offer, ...someThingData} = data
         sendBroadcast(`[OFFER]: ${userId}`)
         sendBroadcast(`[SOMETHING DATA]: ${JSON.stringify(someThingData)}`)
@@ -68,13 +68,7 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
                         candidateId: userId,
                         device: peerWs1.device
                     }
-                    console.log('[PUSHING TO WAITING LIST]: ', JSON.stringify({
-                        userId,
-                        name: peerWs1.name,
-                        photo: peerWs1.photo,
-                        candidateId: userId,
-                        device: peerWs1.device
-                    }))
+ 
                     sendBroadcast(`[PUSHING TO WAITING LIST]: ${JSON.stringify({
                         userId,
                         name: peerWs1.name,
@@ -90,7 +84,7 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
                         pushInWaitingList(candidates, waitData)
                     }
 
-                    console.log('[list waiting]: ', waitingList)
+       
                     sendBroadcast(`[list waiting]: ${JSON.stringify(waitingList)}`)
                     for(const [_, p] of peer1) {
                         p.candidate = candidateId;
@@ -125,7 +119,7 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
                 
             }
             updateStatus(ws, 'calling')
-            // console.log('[SET VALUE]: ', peer2)
+
             sendMessage('/call', peer2, {
                 ...data, // например, SDP offer, reconnect-флаг и т.п.
                 userId,
@@ -167,7 +161,7 @@ export const handleDecline = ({ ws, userId }) => {
 
         const peer1 = users[peerWs2.candidate];
         if (!peer1) {
-            // console.log('[DECLINE]: Offer user not found');
+
             updateStatus(ws, 'idle'); // хотя бы себя отпустить
             return;
         }
@@ -217,7 +211,7 @@ export const handleAnswer = ({ answer, userId, ws, isUpdate }) => {
         const peer2 = users[userId];
         const peerWs2 = peer2?.get(ws)
 
-        // console.log('[userID answer]: ', userId)
+
 
         
         const candidateId = peerWs2.candidate
