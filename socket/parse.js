@@ -13,11 +13,11 @@ export const parseMessage = (data) => {
 
       const { route, ...somethingData } = JSON.parse(data.toString());
 
-      console.log(`[DATA]: ${JSON.stringify(somethingData)}`)
+      // console.log(`[DATA]: ${JSON.stringify(somethingData)}`)
       
       return { currAction: routes[route], ...somethingData };
     } catch (err) {
       console.error('Parse error - ', err);
       return () => {};
-    }
+    } 
 };

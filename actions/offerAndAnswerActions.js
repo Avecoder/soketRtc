@@ -78,11 +78,15 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
                         candidateId: userId,
                         device: peerWs1.device
                     })}`)
+
+
                     if(Array.isArray(candidates)) {
                         for(const c of candidates) {
+                            console.log('[CANDIDATES]: ', c)
                             pushInWaitingList(c, waitData)
                         }
                     } else {
+                        console.log('[CANDIDATES]: ', candidates)
                         pushInWaitingList(candidates, waitData)
                     }
 
@@ -129,7 +133,7 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
                 photo: peerWs1.photo, // имя вызывающего (раньше было offerUser — возможно, ошибка)
                 candidateId: userId,
                 device: peerWs1.device
-            });
+            }); 
         }
         // Устанавливаем ссылки на кандидатов друг у друга
         sendMessage('/remoteStreamsId', peer2, {streamIds: peerWs1.streamIds})

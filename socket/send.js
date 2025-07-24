@@ -26,6 +26,7 @@ export const sendMessage = (route = '/', sender, data = {}) => {
         const sendedData = formData(route, data)
         const user = isSendingOnePeers(sender, route) 
     
+        
 
         if(user) {
             user.ws.send(sendedData)
