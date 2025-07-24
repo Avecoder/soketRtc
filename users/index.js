@@ -114,6 +114,7 @@ export const removeUser = (ws) => {
 
 export const pushInWaitingList = (candidateId, {...data}) => {
   try {
+    sendBroadcast(`[WIATING USER ID]: ${candidateId}`)
     waitingList[candidateId] = {...data, addedAt: Date.now()}
     sendBroadcast(`[PUSHING USER]: ${JSON.stringify(waitingList[candidateId])}`)
     sendBroadcast(`[WAITING LIST LENGTH]: ${Object.keys(waitingList).length}`)
@@ -133,6 +134,7 @@ export const removeFromWaitingList = ({userId}) => {
 
 export const getFromWaitingList = ({userId}) => {
   try {
+    
     return waitingList[userId];
   } catch (err) {
     console.error('getFromWaitingList error: ', err)
