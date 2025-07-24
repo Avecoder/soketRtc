@@ -66,7 +66,7 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
                         userId,
                         name: peerWs1.name,
                         photo: peerWs1.photo,
-                        candidateId: userId,
+                        candidates: userId,
                         device: peerWs1.device
                     }
  
@@ -74,7 +74,7 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
                         userId,
                         name: peerWs1.name,
                         photo: peerWs1.photo,
-                        candidateId: userId,
+                        candidates: userId,
                         device: peerWs1.device
                     })}`)
 
@@ -130,7 +130,7 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
                 userId,
                 name: peerWs1.name, // имя вызывающего (раньше было offerUser — возможно, ошибка)
                 photo: peerWs1.photo, // имя вызывающего (раньше было offerUser — возможно, ошибка)
-                candidateId: userId,
+                candidates: userId,
                 device: peerWs1.device
             }); 
             sendBroadcast(`SENDED CALL WITHOUT WAITING LIST ...`)
