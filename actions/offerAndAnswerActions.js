@@ -252,6 +252,7 @@ export const handleAnswer = ({ answer, userId, ws, isUpdate }) => {
             sendMessage('/updateAnswer', peer1, {answer})
             broadcast({ userId, type: '/updateIce' });
         } else {
+            console.log('CALL ACCEPT ...')
             updateStatus(ws, 'ringing')
             setPair({userId, candidateId, ws})
             sendMessage('/acceptCall', peer1, {answer, device: peerWs2.device})
