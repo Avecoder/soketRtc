@@ -61,6 +61,9 @@ export const handleSwap = ({ userId, ws }) => {
         iceSecondUserData.candidateIce = iceFirstUser.get(ws)?.iceParams || null;
         updateStatus(ws, 'in_call')
 
+        console.log(`[ICE FIRST](${userId}): `, iceFirstUserData.candidateIce)
+        console.log(`[ICE SECOND](${userId}): `, iceSecondUserData.candidateIce)
+
         // Отправляем каждому пользователю его новый набор ICE-кандидатов
         sendMessage('/swapIce', iceFirstUser, { iceCandidates: iceFirstUserData.candidateIce });
         sendMessage('/swapIce', iceSecondUser, { iceCandidates: iceSecondUserData.candidateIce });
