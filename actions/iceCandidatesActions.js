@@ -16,6 +16,8 @@ export const handleAddIce = ({ ws, iceParams = [] }) => {
     try {
         if (!ws?.userId) throw new Error('ws.userId is missing');
         const user = users[ws.userId].get(ws)
+
+        console.log(`[ADD ICE] ${ws.userId}: `, iceParams)
         // Сохраняем ICE параметры в объект пользователя
         user.iceParams = iceParams
     } catch (err) {
