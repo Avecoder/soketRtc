@@ -53,6 +53,8 @@ export const handleSwap = ({ userId, ws }) => {
         const iceSecondUser = users[iceSecondUserId];
         const iceSecondUserData = isSendingOnePeers(iceSecondUser)
 
+        console.log('iceSecondUserData: ', iceSecondUserData)
+
         // Проверяем, что объекты пользователей существуют
         if (!iceFirstUserData) throw new Error('First user was not found');
         if (!iceSecondUserData) throw new Error('Second user was not found');
