@@ -176,17 +176,21 @@ export const handleDecline = ({ ws, userId }) => {
 
         if (!userId) throw new Error('userId is required');
 
+        // ищем себя
         const peer2 = users[userId];
         console.log('[DECLINE] peer2 (current user object):', peer2);
         if (!peer2) throw new Error('Peer2 user not found');
 
+        // ищем себя по сокету
         const peerWs2 = peer2.get(ws);
         console.log('[DECLINE] peerWs2 (current user\'s peer instance):', peerWs2);
         if (!peerWs2) throw new Error('Peer connection not found for ws');
 
+        // ищем чела
         const peer1 = users[peerWs2.candidate];
         console.log('[DECLINE] peer1 (opponent user object):', peer1);
 
+        // елси другого пира нет, то просто себе idle ебашить
         if (!peer1) {
             console.log('[DECLINE] peer1 not found, setting current user to idle');
             updateStatus(ws, 'idle');
@@ -194,26 +198,34 @@ export const handleDecline = ({ ws, userId }) => {
             return;
         }
 
+        // вытаскиваем данные юзера рабочего тут надо чекнуть
         const peerData1 = isSendingOnePeers(peer1);
         console.log('[DECLINE] peerData1 (opponent user peer data):', peerData1);
 
+        // если у нас эндед, то просто себе idle делаем и все
         if (peerWs2.status === 'ended') {
             console.log('[DECLINE] Current user status is already "ended", setting to idle and returning');
             updateStatus(ws, 'idle');
             return;
         }
 
+        // ебашим себе idle
         console.log('[DECLINE] Setting current user status to "idle"');
         updateStatus(ws, 'idle');
 
+        // если второй пир есть и у него статы со звонком, то мы ему меняем статус на эндед и отправляем decline
         if (peerData1.status !== 'ended' && peerData1.status !== 'idle') {
             console.log('[DECLINE] Notifying opponent about decline and setting their status to "ended"');
+            for(const [_, p] of peer1) {
+                console.log('PEERS DECLINE - ', p.status, ' _ ', p.userId)
+            }
             sendMessage('/decline', peer1, { name: peerWs2.name });
             updateStatus(peerData1.ws, 'ended', peerData1.userId);
         } else {
             console.log('[DECLINE] Opponent already ended or idle');
         }
 
+        // на всякий в ином случае cancel отправляем и сносим пару
         console.log('[DECLINE] Sending cancel message and removing pair');
         sendCancelMessage(peer2);
         removePair({ ws, userId });
