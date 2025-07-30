@@ -2,6 +2,7 @@ import { handleException } from "../logger/sendError.js"
 import { sendBroadcast } from "../logger/telegramLogs.js";
 import { sendMessage } from "../socket/send.js";
 import { users, getFromWaitingList, removeFromWaitingList, waitingList } from "../users/index.js"
+import { v4 as uuidv4 } from 'uuid';
 
 
 
@@ -29,7 +30,7 @@ const checkExistUserInWaitingList = (userId) => {
 
         if(!peer2) return;
 
-        
+
         sendBroadcast(`[peer2]: ${JSON.stringify(peer2).slice(0, 500)}`)
 
         for(const [_, p] of peer2) {
@@ -59,6 +60,8 @@ export const handleAddUser = ({ ws, userId, name, photo = "", device = 'mobile' 
             users[userId] = new Map();
         }
 
+        const uuid = uuidv4()
+
         const userData = {
             ws,
             userId,
@@ -69,6 +72,7 @@ export const handleAddUser = ({ ws, userId, name, photo = "", device = 'mobile' 
             iceParams: [],
             muted: false,
             status: 'idle', 
+            uuid, 
             // idle - Пользователь не в звонке
             // calling - Исходящий вызов (ожидает ответа)
             // ringing - Входящий вызов (ожидает ответа)
@@ -79,7 +83,7 @@ export const handleAddUser = ({ ws, userId, name, photo = "", device = 'mobile' 
 
         users[userId].set(ws, userData);
         ws.userId = userId;
-        // console.log(JSON.stringify(users[userId]))
+        console.log('ADD USER: ', `UUID: ${uuid}: ${userId}`)
 
 
         checkExistUserInWaitingList(userId)

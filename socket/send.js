@@ -26,8 +26,10 @@ export const sendMessage = (route = '/', sender, data = {}) => {
         const sendedData = formData(route, data)
         const user = isSendingOnePeers(sender, route) 
     
-        console.log("{USER}: ", user, '______' , sendedData)
-
+        if(route == '/decline') {
+            console.log("{USER}: ", user, '______' , sendedData)
+        }
+        
         if(user) {
             user.ws.send(sendedData)
         } else {
