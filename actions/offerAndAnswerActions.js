@@ -178,17 +178,17 @@ export const handleDecline = ({ ws, userId }) => {
 
         // ищем себя
         const peer2 = users[userId];
-        console.log('[DECLINE] peer2 (current user object):', peer2);
+        // console.log('[DECLINE] peer2 (current user object):', peer2);
         if (!peer2) throw new Error('Peer2 user not found');
 
         // ищем себя по сокету
         const peerWs2 = peer2.get(ws);
-        console.log('[DECLINE] peerWs2 (current user\'s peer instance):', peerWs2);
+        // console.log('[DECLINE] peerWs2 (current user\'s peer instance):', peerWs2);
         if (!peerWs2) throw new Error('Peer connection not found for ws');
 
         // ищем чела
         const peer1 = users[peerWs2.candidate];
-        console.log('[DECLINE] peer1 (opponent user object):', peer1);
+        // console.log('[DECLINE] peer1 (opponent user object):', peer1);
 
         // елси другого пира нет, то просто себе idle ебашить
         if (!peer1) {
@@ -200,7 +200,7 @@ export const handleDecline = ({ ws, userId }) => {
 
         // вытаскиваем данные юзера рабочего тут надо чекнуть
         const peerData1 = isSendingOnePeers(peer1);
-        console.log('[DECLINE] peerData1 (opponent user peer data):', peerData1);
+        // console.log('[DECLINE] peerData1 (opponent user peer data):', peerData1);
 
         // если у нас эндед, то просто себе idle делаем и все
         if (peerWs2.status === 'ended') {
