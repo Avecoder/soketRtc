@@ -1,4 +1,4 @@
-import { users } from "../users/index.js"
+import { isSendingOnePeers, users } from "../users/index.js"
 import { handleException } from "../logger/sendError.js"
 import { formData } from "../socket/send.js"
 
@@ -44,6 +44,12 @@ export const handleUpdateMedia = ({ws, userId, data}) => {
 
     if (!candidate) throw new Error('Candidate not found');
 
+    if(!candidateActive) {
+      for(const [_, p] of candidate) {
+        p.ws.send(formData('/updateMedia', data))
+      }
+      return;
+    } 
     candidateActive.ws.send(formData('/updateMedia', data))
   } catch(err) {
     handleException(ws ?? null, 'handleUpdateMedia', err, {...data})
