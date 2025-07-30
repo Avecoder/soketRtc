@@ -128,7 +128,7 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
             sendMessage('/updateOffer', peer2, {
                 ...data
             })
-        } else {
+        } else {ё54321  
             
             
             for(const [_, p] of peer1) {
@@ -170,6 +170,7 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
  */
 export const handleDecline = ({ ws, userId }) => {
     try {
+        console.log('[USERID] - ', userId)
         if (!userId) throw new Error('userId is required');
 
         const peer2 = users[userId];
