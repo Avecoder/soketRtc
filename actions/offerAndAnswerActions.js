@@ -189,6 +189,7 @@ export const handleDecline = ({ ws, userId }) => {
         if (!peer1) {
             console.log('[DECLINE] peer1 not found, setting current user to idle');
             updateStatus(ws, 'idle');
+            sendCancelMessage(peer2);
             return;
         }
 
