@@ -172,6 +172,7 @@ export const handleDecline = ({ ws, userId }) => {
     try {
         console.log('[DECLINE] Start handling decline');
         console.log('[DECLINE] userId:', userId);
+        console.log('USERS', Object.keys(users))
 
         if (!userId) throw new Error('userId is required');
 
