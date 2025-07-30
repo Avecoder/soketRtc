@@ -35,14 +35,22 @@ export const handleUpdateMedia = ({ws, userId, data}) => {
   try {
     if(!userId) throw new Error('userId is required');
 
-        
+    let candidate = null
+    let candidateId = null
     const me = isSendingOnePeers(users[userId])
-    if (!me) throw new Error('Me not found');
+    if (!me) {
+      for(const [_, p] of users[userId]) {
+        candidateId = p.candidate
+      }
+    } else {
+        candidateId = me.candidate
+    }
 
-    const candidate = users[me.candidate];
-    const candidateActive = isSendingOnePeers(candidate)
+    candidate = users[candidateId];
+    
 
     if (!candidate) throw new Error('Candidate not found');
+    const candidateActive = isSendingOnePeers(candidate)
 
     if(!candidateActive) {
       for(const [_, p] of candidate) {
