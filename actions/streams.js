@@ -1,5 +1,6 @@
 import { users } from "../users/index.js"
 import { handleException } from "../logger/sendError.js"
+import { formData } from "../socket/send.js"
 
 /**
  * Обработчик события установки ID удалённого трека для конкретного пользователя.
@@ -26,5 +27,25 @@ export const handleSetRemoteStreamId = ({ws,  userId, kind, streamId }) => {
     // В случае ошибки логируем исключение и отправляем информацию о ней
     // Если у пользователя есть веб-сокет (ws), передаем его для контекста
     handleException(users[userId]?.ws ?? null, 'SET_REMOTE_STREAM_ID', err, {})
+  }
+}
+
+
+export const handleUpdateMedia = ({ws, userId, data}) => {
+  try {
+    if(!userId) throw new Error('userId is required');
+
+        
+    const me = isSendingOnePeers(users[userId])
+    if (!me) throw new Error('Me not found');
+
+    const candidate = users[me.candidate];
+    const candidateActive = isSendingOnePeers(candidate)
+
+    if (!candidate) throw new Error('Candidate not found');
+
+    candidateActive.ws.send(formData('/updateMedia', data))
+  } catch(err) {
+    handleException(ws ?? null, 'handleUpdateMedia', err, {...data})
   }
 }

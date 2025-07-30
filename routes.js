@@ -7,7 +7,8 @@ import {
     handleSetRemoteStreamId, 
     handleAddUser,
     handleUpdateAnswer,
-    handleUpdateOffer
+    handleUpdateOffer,
+    handleUpdateMedia
 } from "./actions/index.js";
 
 
@@ -26,6 +27,7 @@ export const routes = {
     'SET_REMOTE_STREAM_ID': handleSetRemoteStreamId,
     'UPDATE_OFFER': handleUpdateOffer,
     'UPDATE_ANSWER': handleUpdateAnswer,
+    'MEDIA_UPDATE': handleUpdateMedia
     // 'GET_LIST': handleGetUser, // -
     // 'SWITCH_AUDIO': handleSwitchAudio, // -
     // 'SWITCH_VIDEO': handleSwitchVideo,
