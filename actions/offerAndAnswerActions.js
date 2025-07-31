@@ -72,6 +72,7 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
         console.log('[CANDIDATE LIST]: ', candidateList)
 
         mapPeers(candidateList, (peer, candidate) => {
+            console.log('FIND: ', peer, candidate)
             peer2 = peer;
             candidateId = candidate;
         });
