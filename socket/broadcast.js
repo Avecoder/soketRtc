@@ -24,7 +24,7 @@ export const broadcast = ({ userId, type, data = {} }) => {
         const candidateActive = isSendingOnePeers(candidate)
 
         // console.log('[CANDIDATE ID]: ', me.candidate)
-        // console.log('[candidateActive]: ', candidateActive)
+        console.log('[candidateActive]: ', candidateActive)
         if (!candidate) throw new Error('Candidate not found');
 
         me.ws.send(formData(type, data))
