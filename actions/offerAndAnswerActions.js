@@ -73,6 +73,8 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
         });
 
         sendBroadcast(`[FOUND PEER2]: ${peer2}`)
+
+        updateStatus(ws, 'calling')
         
         
         if(!isUpdate) {            
@@ -138,7 +140,7 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
                 p.candidate = userId;
                 
             }
-            updateStatus(ws, 'calling')
+            
 
             sendMessage('/call', peer2, {
                 ...data, // например, SDP offer, reconnect-флаг и т.п.
