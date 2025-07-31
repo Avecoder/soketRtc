@@ -10,7 +10,7 @@ const mapPeers = (peers , callback = () => {}) => {
     let candidate = peers[0]
     for(const c of peers) {
         const findedPeer = users[c]
-        if(peer) {
+        if(findedPeer) {
             peer = findedPeer
             candidate = c
             break; 
