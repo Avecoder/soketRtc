@@ -6,14 +6,17 @@ import { setPair, users, getPair, pairOfPeers, removePair, updateStatus, isSendi
 
 
 const mapPeers = (peers , callback = () => {}) => {
+    let peer = null
+    let candidate = peers[0]
     for(const c of peers) {
-        const peer = users[c]
+        const findedPeer = users[c]
         if(peer) {
-            callback(peer, c)
+            peer = findedPeer
+            candidate = c
             break; 
         }
     }
-    callback(null, peers[0])
+    callback(peer, candidate)
 }
 
 function parseCandidates(input) {
