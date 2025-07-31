@@ -31,13 +31,13 @@ export const handleSetRemoteStreamId = ({ws,  userId, kind, streamId }) => {
 }
 
 
-export const handleUpdateMedia = ({ws, userId, ...data}) => {
+export const handleUpdateMedia = ({ws, ...data}) => {
   try {
     if(!userId) throw new Error('userId is required');
 
     let candidate = null
     let candidateId = null
-    const me = isSendingOnePeers(users[userId])
+    const me = isSendingOnePeers(users[ws.userId])
     console.log('ME CANDIDATE: ', me?.candidate)
     if (!me) {
       for(const [_, p] of users[userId]) {
