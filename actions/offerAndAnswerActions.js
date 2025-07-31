@@ -77,10 +77,7 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
         updateStatus(ws, 'calling')
         
         
-        if(!isUpdate) {      
-            for(const [_, p] of peer1) {
-                p.candidate = candidateId;
-            }      
+        if(!isUpdate) {            
             if (!peer2) {
                     const waitData = {
                         ...data, 
@@ -113,7 +110,9 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
        
                     sendBroadcast(`[list waiting]: ${JSON.stringify(Object.keys(waitingList))}`)
                     for(const [_, p] of peer1) {
+                        
                         p.candidate = candidateId;
+                        console.log('SET CANIDDATE: ', p.candidate, candidateId)
                     }
                     return;
             }
@@ -136,9 +135,12 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
         } else {
             
             
-            
+            for(const [_, p] of peer1) {
+                p.candidate = candidateId;
+            }
             for(const [_, p] of peer2) {
                 p.candidate = userId;
+                
             }
             
 
