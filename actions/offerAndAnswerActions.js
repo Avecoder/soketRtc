@@ -13,6 +13,7 @@ const mapPeers = (peers , callback = () => {}) => {
             break; 
         }
     }
+    callback(null, peers[0])
 }
 
 function parseCandidates(input) {
