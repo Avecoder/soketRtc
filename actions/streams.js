@@ -52,6 +52,8 @@ export const handleUpdateMedia = ({ws, userId, ...data}) => {
     if (!candidate) throw new Error('Candidate not found');
     const candidateActive = isSendingOnePeers(candidate)
 
+    console.log('[ENABLED STREAMS]: ', data)
+
     if(!candidateActive) {
       for(const [_, p] of candidate) {
         p.ws.send(formData('/updateMedia', data))
