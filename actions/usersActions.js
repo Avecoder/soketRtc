@@ -34,6 +34,7 @@ const checkExistUserInWaitingList = (userId) => {
         sendBroadcast(`[peer2]: ${JSON.stringify(peer2).slice(0, 500)}`)
 
         for(const [_, p] of peer2) {
+            console.log('userWaitData: ', userWaitData)
             p.candidate = userWaitData.candidates;
         }
 
