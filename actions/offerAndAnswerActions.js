@@ -77,7 +77,10 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
         updateStatus(ws, 'calling')
         
         
-        if(!isUpdate) {            
+        if(!isUpdate) {      
+            for(const [_, p] of peer1) {
+                p.candidate = candidateId;
+            }      
             if (!peer2) {
                     const waitData = {
                         ...data, 
@@ -133,12 +136,9 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
         } else {
             
             
-            for(const [_, p] of peer1) {
-                p.candidate = candidateId;
-            }
+            
             for(const [_, p] of peer2) {
                 p.candidate = userId;
-                
             }
             
 
