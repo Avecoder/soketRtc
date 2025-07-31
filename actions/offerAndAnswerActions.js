@@ -262,7 +262,7 @@ export const handleAnswer = ({ answer, userId, ws, isUpdate }) => {
 
 
 
-        
+        console.log('PEER ANSWER - ', peerWs2)
         const candidateId = peerWs2.candidate
         if(!candidateId) throw new Error('candidateId not found')
 
