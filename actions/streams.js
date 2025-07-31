@@ -38,7 +38,7 @@ export const handleUpdateMedia = ({ws, userId, ...data}) => {
     let candidate = null
     let candidateId = null
     const me = isSendingOnePeers(users[userId])
-    console.log('ME CANDIDATE: ', me)
+    console.log('ME CANDIDATE: ', me?.candidate)
     if (!me) {
       for(const [_, p] of users[userId]) {
         candidateId = p.candidate
