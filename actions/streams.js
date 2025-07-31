@@ -33,7 +33,7 @@ export const handleSetRemoteStreamId = ({ws,  userId, kind, streamId }) => {
 
 export const handleUpdateMedia = ({ws, ...data}) => {
   try {
-    if(!userId) throw new Error('userId is required');
+    if(!ws.userId) throw new Error('userId is required');
 
     let candidate = null
     let candidateId = null
