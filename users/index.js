@@ -147,7 +147,7 @@ export const isSendingOnePeers = (sender) => {
   try {
     
     const user = Array.from(sender).find(([_, user]) => user.status !== 'idle')
-    console.log(Array.from(sender).map(([_, user]) => user.status !== 'idle' ? user.userId : null))
+    console.log(Array.from(sender).filter(([_, user]) => user.status !== 'idle'))
     if(user && user.length) return user[1]
     else return false
   } catch (err) {
