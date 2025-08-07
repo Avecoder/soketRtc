@@ -112,7 +112,7 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
         }
         
         const peerData2 = isSendingOnePeers(peer2)
-        console.log(`[STATUS] ${peerData2.userId}`, peerData2.status)
+        
         if((checkPair && !isUpdate) || peerData2.status == 'ended') {    
             
             sendBroadcast(`[STATUS] ${peerData2.userId}: ${peerData2.status}`)
@@ -195,7 +195,9 @@ export const handleDecline = ({ ws, userId }) => {
         // вытаскиваем данные юзера рабочего тут надо чекнуть
         const peerData1 = isSendingOnePeers(peer1);
 
-
+        if(!peerData1) {
+            sendCancelMessage(peer1);
+        }
         // если у нас эндед, то просто себе idle делаем и все
         if (peerWs2.status === 'ended') {
   
