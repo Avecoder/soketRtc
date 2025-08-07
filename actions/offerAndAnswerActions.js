@@ -112,11 +112,12 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
         }
         
         const peerData2 = isSendingOnePeers(peer2)
-        
+        console.log('[cehck busy]: ', peerData2.status)
         if((checkPair && !isUpdate) || peerData2.status == 'ended') {    
             
             sendBroadcast(`[STATUS] ${peerData2.userId}: ${peerData2.status}`)
             sendMessage('/busy', peer1)
+            console.log('send busy')
             return;
         }
 
