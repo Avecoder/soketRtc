@@ -110,8 +110,9 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
             peer2 = users[checkPair];
             if(!peer2) throw new Error('Peer2 not found');
         }
-        console.log(`[STATUS] ${peerData2.userId}`, peerData2.status)
+        
         const peerData2 = isSendingOnePeers(peer2)
+        console.log(`[STATUS] ${peerData2.userId}`, peerData2.status)
         if((checkPair && !isUpdate) || peerData2.status == 'ended') {    
             
             sendBroadcast(`[STATUS] ${peerData2.userId}: ${peerData2.status}`)
