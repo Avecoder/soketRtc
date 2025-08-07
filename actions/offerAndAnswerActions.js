@@ -50,9 +50,8 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
     try {
 
 
-        console.log(candidates, 'is array: ', Array.isArray(candidates))
-        sendBroadcast(`[OFFER]: ${userId}`)
-        sendBroadcast(`[candidates]: ${candidates}`)
+
+
         if (!userId) throw new Error("userId is required");
         let peer1 = users[userId]
         const peerWs1 = peer1.get(ws)
@@ -69,10 +68,8 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
      
         const candidateList = parseCandidates(candidates);
 
-        console.log('[CANDIDATE LIST]: ', candidateList)
 
         mapPeers(candidateList, (peer, candidate) => {
-            console.log('FIND: ', peer, candidate)
             peer2 = peer;
             candidateId = candidate;
         });
@@ -93,31 +90,19 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
                         device: peerWs1.device
                     }
  
-                    sendBroadcast(`[PUSHING TO WAITING LIST]: ${JSON.stringify({
-                        userId,
-                        name: peerWs1.name,
-                        photo: peerWs1.photo,
-                        candidates: userId,
-                        device: peerWs1.device
-                    })}`)
-
-
                     if(Array.isArray(candidates)) {
                         for(const c of candidates) {
-                            console.log('[CANDIDATES 1]: ', c)
+
                             pushInWaitingList(c, waitData)
                         }
                     } else {
-                        console.log('[CANDIDATES 2]: ', candidates)
+
                         pushInWaitingList(candidates, waitData)
                     }
 
-       
-                    sendBroadcast(`[list waiting]: ${JSON.stringify(Object.keys(waitingList))}`)
                     for(const [_, p] of peer1) {
                         
                         p.candidate = candidateId;
-                        console.log('SET CANIDDATE: ', p.candidate, candidateId)
                     }
                     return;
             }
@@ -128,6 +113,8 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
 
         const peerData2 = isSendingOnePeers(peer2)
         if((checkPair && !isUpdate) || peerData2.status == 'ended') {    
+            console.log(`[STATUS] ${peerData2.userId}`, peerData2.status)
+            sendBroadcast(`[STATUS] ${peerData2.userId}: ${peerData2.status}`)
             sendMessage('/busy', peer1)
             return;
         }
@@ -157,7 +144,6 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
                 candidates: userId,
                 device: peerWs1.device
             }); 
-            sendBroadcast(`SENDED CALL WITHOUT WAITING LIST ...`)
         }
         // Устанавливаем ссылки на кандидатов друг у друга
         sendMessage('/remoteStreamsId', peer2, {streamIds: peerWs1.streamIds})
@@ -179,29 +165,27 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
  */
 export const handleDecline = ({ ws, userId }) => {
     try {
-        console.log('[DECLINE] Start handling decline');
-        console.log('[DECLINE] userId:', userId);
-        console.log('USERS', Object.keys(users))
+
 
         if (!userId) throw new Error('userId is required');
 
         // ищем себя
         const peer2 = users[userId];
-        // console.log('[DECLINE] peer2 (current user object):', peer2);
+      
         if (!peer2) throw new Error('Peer2 user not found');
 
         // ищем себя по сокету
         const peerWs2 = peer2.get(ws);
-        // console.log('[DECLINE] peerWs2 (current user\'s peer instance):', peerWs2);
+
         if (!peerWs2) throw new Error('Peer connection not found for ws');
 
         // ищем чела
         const peer1 = users[peerWs2.candidate];
-        // console.log('[DECLINE] peer1 (opponent user object):', peer1);
+      
 
         // елси другого пира нет, то просто себе idle ебашить
         if (!peer1) {
-            console.log('[DECLINE] peer1 not found, setting current user to idle');
+     
             updateStatus(ws, 'idle');
             sendCancelMessage(peer2);
             return;
@@ -209,37 +193,30 @@ export const handleDecline = ({ ws, userId }) => {
 
         // вытаскиваем данные юзера рабочего тут надо чекнуть
         const peerData1 = isSendingOnePeers(peer1);
-        // console.log('[DECLINE] peerData1 (opponent user peer data):', peerData1);
+
 
         // если у нас эндед, то просто себе idle делаем и все
         if (peerWs2.status === 'ended') {
-            console.log('[DECLINE] Current user status is already "ended", setting to idle and returning');
+  
             updateStatus(ws, 'idle');
             return;
         }
 
-        // ебашим себе idle
-        console.log('[DECLINE] Setting current user status to "idle"');
+
         updateStatus(ws, 'idle');
 
         // если второй пир есть и у него статы со звонком, то мы ему меняем статус на эндед и отправляем decline
         if (peerData1.status !== 'ended' && peerData1.status !== 'idle') {
-            console.log('[DECLINE] Notifying opponent about decline and setting their status to "ended"');
-            for(const [_, p] of peer1) {
-                console.log('PEERS DECLINE - ', p.status, ' _ ', p.userId)
-            }
+
             sendMessage('/decline', peer1, { name: peerWs2.name });
             updateStatus(peerData1.ws, 'ended', peerData1.userId);
-        } else {
-            console.log('[DECLINE] Opponent already ended or idle');
         }
 
-        // на всякий в ином случае cancel отправляем и сносим пару
-        console.log('[DECLINE] Sending cancel message and removing pair');
+ 
         sendCancelMessage(peer2);
         removePair({ ws, userId });
 
-        console.log('[DECLINE] Decline handling complete');
+       
 
     } catch (err) {
         console.error('[DECLINE] Error caught:', err);
@@ -270,8 +247,6 @@ export const handleAnswer = ({ answer, userId, ws, isUpdate }) => {
         const peerWs2 = peer2?.get(ws)
 
 
-
-        console.log('PEER ANSWER - ', peerWs2)
         const candidateId = peerWs2.candidate
         if(!candidateId) throw new Error('candidateId not found')
 
@@ -289,7 +264,6 @@ export const handleAnswer = ({ answer, userId, ws, isUpdate }) => {
             sendMessage('/updateAnswer', peer1, {answer})
             broadcast({ userId, type: '/updateIce' });
         } else {
-            console.log('CALL ACCEPT ...')
             updateStatus(ws, 'ringing')
             setPair({userId, candidateId, ws})
             sendMessage('/acceptCall', peer1, {answer, device: peerWs2.device})
