@@ -49,9 +49,7 @@ function parseCandidates(input) {
 export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpdate = false, retry = false, ...data }) => {
     try {
 
-
-
-
+        console.log('[candidates offer]: ', candidates)
         if (!userId) throw new Error("userId is required");
         let peer1 = users[userId]
         const peerWs1 = peer1.get(ws)
@@ -78,7 +76,6 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
 
         updateStatus(ws, 'calling')
         
-        
         if(!isUpdate) {            
             if (!peer2) {
                     const waitData = {
@@ -92,16 +89,13 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
  
                     if(Array.isArray(candidates)) {
                         for(const c of candidates) {
-
                             pushInWaitingList(c, waitData)
                         }
                     } else {
-
                         pushInWaitingList(candidates, waitData)
                     }
 
                     for(const [_, p] of peer1) {
-                        
                         p.candidate = candidateId;
                     }
                     return;
