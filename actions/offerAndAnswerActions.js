@@ -81,7 +81,7 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
                     const waitData = {
                         ...data, 
                         userId,
-                        name,
+                        name: name ?? peerWs1.name,
                         photo: peerWs1.photo,
                         candidates: userId,
                         device: peerWs1.device
@@ -135,7 +135,7 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
             sendMessage('/call', peer2, {
                 ...data, // например, SDP offer, reconnect-флаг и т.п.
                 userId,
-                name, // имя вызывающего (раньше было offerUser — возможно, ошибка)
+                name: name ?? peerWs1.name, // имя вызывающего (раньше было offerUser — возможно, ошибка)
                 photo: peerWs1.photo, // имя вызывающего (раньше было offerUser — возможно, ошибка)
                 candidates: userId,
                 device: peerWs1.device
