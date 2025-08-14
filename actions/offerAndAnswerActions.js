@@ -46,7 +46,7 @@ function parseCandidates(input) {
  * @param {Object} params.data - Дополнительные данные offer'а (SDP, флаги и т.д.).
  * @param {Boolean} params.isUpdate - Для обновления offer sdp
  */
-export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpdate = false, retry = false, ...data }) => {
+export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpdate = false, retry = false, name, ...data }) => {
     try {
 
         console.log('[candidates offer]: ', candidates)
@@ -81,7 +81,7 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
                     const waitData = {
                         ...data, 
                         userId,
-                        name: peerWs1.name,
+                        name,
                         photo: peerWs1.photo,
                         candidates: userId,
                         device: peerWs1.device
@@ -135,7 +135,7 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
             sendMessage('/call', peer2, {
                 ...data, // например, SDP offer, reconnect-флаг и т.п.
                 userId,
-                name: peerWs1.name, // имя вызывающего (раньше было offerUser — возможно, ошибка)
+                name, // имя вызывающего (раньше было offerUser — возможно, ошибка)
                 photo: peerWs1.photo, // имя вызывающего (раньше было offerUser — возможно, ошибка)
                 candidates: userId,
                 device: peerWs1.device
