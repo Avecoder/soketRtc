@@ -31,7 +31,6 @@ const checkExistUserInWaitingList = (userId) => {
         if(userWaitData?.action == 'cancel') {
             sendCancelMessage(peer2);
             removeFromWaitingList({userId})
-            return;
         }
 
         
