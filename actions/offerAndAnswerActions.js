@@ -2,7 +2,7 @@ import { handleException } from "../logger/sendError.js"
 import { sendBroadcast } from "../logger/telegramLogs.js";
 import { broadcast } from "../socket/broadcast.js";
 import { sendCancelMessage, sendMessage } from "../socket/send.js";
-import { setPair, users, getPair, pairOfPeers, removePair, updateStatus, isSendingOnePeers, pushInWaitingList, waitingList } from "../users/index.js";
+import { setPair, users, getPair, pairOfPeers, removePair, updateStatus, isSendingOnePeers, pushInWaitingList, waitingList, getFromWaitingList } from "../users/index.js";
 
 
 const mapPeers = (peers , callback = () => {}) => {
