@@ -19,16 +19,22 @@ const checkExistUserInWaitingList = (userId) => {
 
         const userWaitData = getFromWaitingList({userId});
 
-       
-        
 
         if(!userWaitData) return;
 
         sendBroadcast(`[userWaitData]: ${JSON.stringify(userWaitData).slice(0, 500)}`)
 
-        const peer2 = users[userId] // Отвечающий пир
+        const peer2 = users[userId] 
 
         if(!peer2) return;
+
+        if(userWaitData?.action == 'cancel') {
+            sendCancelMessage(peer2);
+            removeFromWaitingList({userId})
+            return;
+        }
+
+        
 
 
         sendBroadcast(`[peer2]: ${JSON.stringify(peer2).slice(0, 500)}`)

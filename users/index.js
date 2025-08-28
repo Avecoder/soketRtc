@@ -125,6 +125,7 @@ export const pushInWaitingList = (candidateId, {...data}) => {
   }
 }
 
+
 export const removeFromWaitingList = ({userId}) => {
   try {
     delete waitingList[userId]

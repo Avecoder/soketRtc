@@ -42,7 +42,7 @@ function parseCandidates(input) {
  * @param {Object} params
  * @param {WebSocket} params.ws - WebSocket отправителя (того, кто инициирует вызов).
  * @param {string} params.candidateId - ID пользователя, которому отправляется вызов.
- * @param {string} params.userId - ID пользователя, инициирующего вызов.
+ * @param {string} params.userId - ID пользователя, инихххциирующего вызов.
  * @param {Object} params.data - Дополнительные данные offer'а (SDP, флаги и т.д.).
  * @param {Boolean} params.isUpdate - Для обновления offer sdp
  */
@@ -168,11 +168,17 @@ export const handleDecline = ({ ws, userId }) => {
         const peerWs2 = peer2.get(ws);
 
         if (!peerWs2) throw new Error('Peer connection not found for ws');
-        console.log('DECLINE USERS - ', users)
+
+        const inWaitingList = getFromWaitingList({userId: peerWs2.candidate})
+
+        if(inWaitingList) {
+            pushInWaitingList(peerWs2.candidate, {...inWaitingList, action: 'cancel'})
+        }
+
         // ищем чела
         const peer1 = users[peerWs2.candidate];
+
       
-        console.log(peer1)
         // елси другого пира нет, то просто себе idle ебашить
         if (!peer1) {
      
