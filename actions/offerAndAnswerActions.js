@@ -2,7 +2,7 @@ import { handleException } from "../logger/sendError.js"
 import { sendBroadcast } from "../logger/telegramLogs.js";
 import { broadcast } from "../socket/broadcast.js";
 import { sendCancelMessage, sendMessage } from "../socket/send.js";
-import { setPair, users, getPair, pairOfPeers, removePair, updateStatus, isSendingOnePeers, pushInWaitingList, waitingList, getFromWaitingList } from "../users/index.js";
+import { setPair, users, getPair, pairOfPeers, removePair, updateStatus, isSendingOnePeers, pushInWaitingList, waitingList, getFromWaitingList, removeFromWaitingList } from "../users/index.js";
 
 
 const mapPeers = (peers , callback = () => {}) => {
@@ -110,7 +110,6 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
    
 
         if(isUpdate) {
-            
             sendMessage('/updateOffer', peer2, {
                 ...data
             })
@@ -181,7 +180,6 @@ export const handleDecline = ({ ws, userId }) => {
       
         // елси другого пира нет, то просто себе idle ебашить
         if (!peer1) {
-     
             updateStatus(ws, 'idle');
             sendCancelMessage(peer2);
             return;
@@ -195,7 +193,6 @@ export const handleDecline = ({ ws, userId }) => {
         }
         // если у нас эндед, то просто себе idle делаем и все
         if (peerWs2.status === 'ended') {
-  
             updateStatus(ws, 'idle');
             return;
         }
@@ -244,13 +241,11 @@ export const handleAnswer = ({ answer, userId, ws, isUpdate }) => {
         const peer2 = users[userId];
         const peerWs2 = peer2?.get(ws)
 
-
         const candidateId = peerWs2.candidate
         if(!candidateId) throw new Error('candidateId not found')
 
         // Получаем пользователя, который изначально отправил offer (то есть кандидат)
         const peer1 = users[candidateId];
-  
 
         // Проверяем, что оба пользователя существуют
         if (!peer2) throw new Error('Peer2 not found');
