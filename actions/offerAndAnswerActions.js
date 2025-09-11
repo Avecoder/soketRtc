@@ -86,8 +86,8 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
                 device: peerWs1.device
             }
 
-            if(Array.isArray(candidates)) {
-                for(const c of candidates) {
+            if(Array.isArray(candidateList)) {
+                for(const c of candidateList) {
                     pushInWaitingList(c, waitData)
                 }
             } else {
