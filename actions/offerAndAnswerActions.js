@@ -81,7 +81,7 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
                 ...data, 
                 userId,
                 name: name ?? peerWs1.name,
-                photo: peerWs1.photo,
+                photo: !peerWs1.photo ? data.photo : peerWs1.photo,
                 candidates: userId,
                 device: peerWs1.device
             }
