@@ -8,10 +8,17 @@ import { routes } from "../routes.js";
 
 
 
-export const parseMessage = (data) => {
+export const parseMessage = (data, ws) => {
     try {
+      const messageStr = data.toString();
+      
+      // Проверяем, является ли сообщение простой строкой PING
+      if (messageStr === 'PING') {
+        ws.lastPingTime = Date.now(); // Обновляем время последнего ping
+        return { currAction: routes['PING'], ws };
+      }
 
-      const { route, ...somethingData } = JSON.parse(data.toString());
+      const { route, ...somethingData } = JSON.parse(messageStr);
 
       // console.log(`[DATA]: ${JSON.stringify(somethingData)}`)
       
