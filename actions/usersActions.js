@@ -1,7 +1,7 @@
 import { handleException } from "../logger/sendError.js"
 import { sendBroadcast } from "../logger/telegramLogs.js";
 import { sendCancelMessage, sendMessage } from "../socket/send.js";
-import { users, getFromWaitingList, removeFromWaitingList, waitingList } from "../users/index.js"
+import { users, getFromWaitingList, removeFromWaitingList, waitingList, setPair } from "../users/index.js"
 import { v4 as uuidv4 } from 'uuid';
 
 
@@ -136,17 +136,24 @@ export const handleAddUser = ({ ws, userId, name, photo = "", device = 'mobile' 
 
         // Если это переподключение во время активного звонка, восстанавливаем связи и уведомляем собеседника
         if (isReconnect && userData.candidate && (userData.status === 'in_call' || userData.status === 'ringing' || userData.status === 'calling')) {
-            const candidateUser = users[userData.candidate];
+            const candidateId = userData.candidate;
+            const candidateUser = users[candidateId];
+            
             if (candidateUser) {
+                // Восстанавливаем глобальную пару в pairOfPeers
+                console.log(`[PAIR RESTORE] Restoring global pair: ${userId} <-> ${candidateId}`);
+                setPair({ userId, candidateId, ws });
+
                 // Восстанавливаем обратную связь у партнера
                 for (const [_, partnerData] of candidateUser) {
                     if (partnerData.candidate === userId) {
                         // Связь уже есть, все ок
+                        console.log(`[LINK OK] Link from ${candidateId} to ${userId} already exists`);
                         break;
                     } else if (!partnerData.candidate || partnerData.status !== 'idle') {
                         // Восстанавливаем связь
                         partnerData.candidate = userId;
-                        console.log(`[LINK RESTORED] Restored link from ${userData.candidate} to ${userId}`);
+                        console.log(`[LINK RESTORED] Restored link from ${candidateId} to ${userId}`);
                         break;
                     }
                 }
@@ -156,7 +163,9 @@ export const handleAddUser = ({ ws, userId, name, photo = "", device = 'mobile' 
                     name: userData.name,
                     status: userData.status 
                 });
-                console.log(`[PEER NOTIFIED] Notified ${userData.candidate} about ${userId} reconnection`);
+                console.log(`[PEER NOTIFIED] Notified ${candidateId} about ${userId} reconnection`);
+            } else {
+                console.warn(`[PAIR RESTORE WARNING] Candidate user ${candidateId} not found for ${userId}`);
             }
         }
 
