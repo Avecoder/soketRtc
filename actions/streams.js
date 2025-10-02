@@ -1,4 +1,4 @@
-import { isSendingOnePeers, users } from "../users/index.js"
+import { isSendingOnePeers, users, getUserByWs } from "../users/index.js"
 import { handleException } from "../logger/sendError.js"
 import { formData } from "../socket/send.js"
 
@@ -21,7 +21,9 @@ export const handleSetRemoteStreamId = ({ws,  userId, kind, streamId }) => {
     if (!users[userId]) throw new Error('peer1 not found')
 
     // Сохраняем ID трека по типу ('audio' или 'video') в объекте пользователя
-    users[userId].get(ws).streamIds[kind] = streamId
+    const user = getUserByWs(userId, ws);
+    if (!user) throw new Error('User not found');
+    user.streamIds[kind] = streamId
 
   } catch (err) {
     // В случае ошибки логируем исключение и отправляем информацию о ней
@@ -35,22 +37,18 @@ export const handleUpdateMedia = ({ws,userId, ...data}) => {
   try {
     if(!ws.userId) throw new Error('userId is required');
 
-    let candidate = null
-    let candidateId = null
-    const me = isSendingOnePeers(users[ws.userId])
+    // Получаем текущего пользователя с новой логикой
+    const me = getUserByWs(ws.userId, ws);
+    if (!me) throw new Error('Current user not found');
+
     console.log('ME CANDIDATE: ', me?.candidate)
-    if (!me) {
-      for(const [_, p] of users[ws.userId]) {
-        candidateId = p.candidate
-      }
-    } else {
-        candidateId = me.candidate
-    }
-
-    candidate = users[candidateId];
     
+    const candidateId = me.candidate;
+    if (!candidateId) throw new Error('Candidate ID not found');
 
+    const candidate = users[candidateId];
     if (!candidate) throw new Error('Candidate not found');
+    
     const candidateActive = isSendingOnePeers(candidate)
 
     console.log('[ENABLED STREAMS]: ', data)

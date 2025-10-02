@@ -134,10 +134,23 @@ export const handleAddUser = ({ ws, userId, name, photo = "", device = 'mobile' 
         ws.userId = userId;
         console.log('ADD USER: ', `UUID: ${uuid}: ${userId} (reconnect: ${isReconnect})`)
 
-        // Если это переподключение во время активного звонка, уведомляем собеседника
-        if (isReconnect && userData.candidate && (userData.status === 'in_call' || userData.status === 'ringing')) {
+        // Если это переподключение во время активного звонка, восстанавливаем связи и уведомляем собеседника
+        if (isReconnect && userData.candidate && (userData.status === 'in_call' || userData.status === 'ringing' || userData.status === 'calling')) {
             const candidateUser = users[userData.candidate];
             if (candidateUser) {
+                // Восстанавливаем обратную связь у партнера
+                for (const [_, partnerData] of candidateUser) {
+                    if (partnerData.candidate === userId) {
+                        // Связь уже есть, все ок
+                        break;
+                    } else if (!partnerData.candidate || partnerData.status !== 'idle') {
+                        // Восстанавливаем связь
+                        partnerData.candidate = userId;
+                        console.log(`[LINK RESTORED] Restored link from ${userData.candidate} to ${userId}`);
+                        break;
+                    }
+                }
+
                 sendMessage('/peerReconnected', candidateUser, { 
                     userId, 
                     name: userData.name,

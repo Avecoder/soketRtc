@@ -94,8 +94,11 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
                 pushInWaitingList(candidates, waitData)
             }
         } else {
+            // Для обновления offer ищем партнера через getPair
+            if (!checkPair) throw new Error('No active pair found for update');
             peer2 = users[checkPair];
             if(!peer2) throw new Error('Peer2 not found');
+            candidateId = checkPair; // Устанавливаем candidateId для дальнейшего использования
         }
         
         const peerData2 = isSendingOnePeers(peer2)
