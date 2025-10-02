@@ -2,7 +2,7 @@ import { handleException } from "../logger/sendError.js"
 import { sendBroadcast } from "../logger/telegramLogs.js";
 import { broadcast } from "../socket/broadcast.js";
 import { sendCancelMessage, sendMessage } from "../socket/send.js";
-import { setPair, users, getPair, pairOfPeers, removePair, updateStatus, isSendingOnePeers, pushInWaitingList, waitingList, getFromWaitingList, removeFromWaitingList } from "../users/index.js";
+import { setPair, users, getPair, pairOfPeers, removePair, updateStatus, isSendingOnePeers, pushInWaitingList, waitingList, getFromWaitingList, removeFromWaitingList, getActiveUser, getUserByWs } from "../users/index.js";
 
 
 const mapPeers = (peers , callback = () => {}) => {
@@ -52,7 +52,7 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
 
         if (!userId) throw new Error("userId is required");
         let peer1 = users[userId]
-        const peerWs1 = peer1.get(ws)
+        const peerWs1 = getUserByWs(userId, ws)
         if (!peerWs1) throw new Error('User not found');
         
         
@@ -164,7 +164,7 @@ export const handleDecline = ({ ws, userId }) => {
         if (!peer2) throw new Error('Peer2 user not found');
 
         // ищем себя по сокету
-        const peerWs2 = peer2.get(ws);
+        const peerWs2 = getUserByWs(userId, ws);
 
         if (!peerWs2) throw new Error('Peer connection not found for ws');
 
@@ -239,7 +239,7 @@ export const handleAnswer = ({ answer, userId, ws, isUpdate }) => {
         // Получаем пользователя, который отправил answer
         if(!userId) throw new Error('userId not found')
         const peer2 = users[userId];
-        const peerWs2 = peer2?.get(ws)
+        const peerWs2 = getUserByWs(userId, ws)
 
         const candidateId = peerWs2.candidate
         if(!candidateId) throw new Error('candidateId not found')

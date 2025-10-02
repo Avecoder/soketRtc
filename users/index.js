@@ -157,10 +157,67 @@ export const isSendingOnePeers = (sender) => {
   }
 }
 
+/**
+ * Получает активного пользователя по userId, независимо от WebSocket
+ * Приоритет: не idle статус > любой доступный пользователь
+ * 
+ * @param {string} userId - ID пользователя
+ * @returns {Object|null} - данные активного пользователя или null
+ */
+export const getActiveUser = (userId) => {
+  try {
+    const userMap = users[userId];
+    if (!userMap || userMap.size === 0) return null;
+
+    // Сначала ищем пользователя с активным статусом (не idle)
+    for (const [ws, userData] of userMap) {
+      if (userData.status !== 'idle') {
+        return userData;
+      }
+    }
+
+    // Если нет активных, возвращаем любого доступного
+    const firstUser = Array.from(userMap.values())[0];
+    return firstUser || null;
+  } catch (err) {
+    console.log('getActiveUser error:', err);
+    return null;
+  }
+}
+
+/**
+ * Получает пользователя по userId и WebSocket (с fallback на активного пользователя)
+ * 
+ * @param {string} userId - ID пользователя  
+ * @param {WebSocket} ws - WebSocket соединение
+ * @returns {Object|null} - данные пользователя или null
+ */
+export const getUserByWs = (userId, ws) => {
+  try {
+    const userMap = users[userId];
+    if (!userMap || userMap.size === 0) return null;
+
+    // Сначала пытаемся найти по конкретному WebSocket
+    const userByWs = userMap.get(ws);
+    if (userByWs) return userByWs;
+
+    // Если не найден по ws, возвращаем активного пользователя
+    return getActiveUser(userId);
+  } catch (err) {
+    console.log('getUserByWs error:', err);
+    return null;
+  }
+}
+
 export const updateStatus = (ws, status = 'idle', userId = '0') => {
   try {
-    const user = users[ws.userId ?? userId].get(ws);
-    user.status = status
+    // Используем новую функцию для получения пользователя
+    const user = getUserByWs(ws.userId ?? userId, ws);
+    if (user) {
+      user.status = status;
+    } else {
+      throw new Error('User not found for status update');
+    }
   } catch (err) {
     console.log(err)
     handleException(ws, 'updateStatus', `Problem checking peer status: ${err.message}`, {});

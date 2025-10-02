@@ -19,7 +19,7 @@ import {
 
 
 export const routes = { 
-    'ADD_USER': handleAddUser, // ++ 
+    'ADD_USER': handleAddUser, // ++ (теперь с поддержкой переподключения)
     'OFFER': handleOffer, // ++
     'ANSWER': handleAnswer, // ++
     'SWAP_ICE': handleSwap, // ++

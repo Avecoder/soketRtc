@@ -1,6 +1,6 @@
 import { handleException } from "../logger/sendError.js";
 import { sendMessage } from "../socket/send.js";
-import { isSendingOnePeers, updateStatus, users } from "../users/index.js"
+import { isSendingOnePeers, updateStatus, users, getUserByWs } from "../users/index.js"
 
 
 
@@ -15,7 +15,7 @@ import { isSendingOnePeers, updateStatus, users } from "../users/index.js"
 export const handleAddIce = ({ ws, iceParams = [] }) => {
     try {
         if (!ws?.userId) throw new Error('ws.userId is missing');
-        const user = users[ws.userId].get(ws)
+        const user = getUserByWs(ws.userId, ws)
 
         // console.log(`[ADD ICE] ${ws.userId}: `, iceParams)
         // Сохраняем ICE параметры в объект пользователя
@@ -41,7 +41,7 @@ export const handleSwap = ({ userId, ws }) => {
         // Получаем объект первого пользователя из списка пользователей по userId
         const iceFirstUser = users[userId]
 
-        const iceFirstUserData = iceFirstUser.get(ws)
+        const iceFirstUserData = getUserByWs(userId, ws)
 
         // Получаем ID второго пользователя, с которым первый состоит в паре
         const iceSecondUserId = iceFirstUserData.candidate;
@@ -61,8 +61,8 @@ export const handleSwap = ({ userId, ws }) => {
 
 
         // Обмениваемся ICE-кандидатами: у первого берем iceParams второго и наоборот
-        iceFirstUser.get(ws).candidateIce = iceSecondUserData?.iceParams || null;
-        iceSecondUserData.candidateIce = iceFirstUser.get(ws)?.iceParams || null;
+        iceFirstUserData.candidateIce = iceSecondUserData?.iceParams || null;
+        iceSecondUserData.candidateIce = iceFirstUserData?.iceParams || null;
         updateStatus(ws, 'in_call')
 
         // console.log(`[ICE FIRST](${userId}): `, iceFirstUserData.candidateIce)
