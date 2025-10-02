@@ -25,11 +25,30 @@ export const getPair = ({ userId, ws }) => {
     try {
       if (!userId) throw new Error("userId is required");
   
-      /** @type {T|undefined} */
+      // Сначала ищем в глобальном объекте пар
       const pair = pairOfPeers[userId];
+      if (pair) return pair;
+
+      // Если не найдено - ищем в данных пользователя (fallback для переподключений)
+      const userMap = users[userId];
+      if (userMap && userMap.size > 0) {
+        // Сначала пытаемся найти по конкретному WebSocket
+        const userByWs = userMap.get(ws);
+        if (userByWs && userByWs.candidate) {
+          console.log(`[PAIR FALLBACK] Using candidate from userData (by ws): ${userId} -> ${userByWs.candidate}`);
+          return userByWs.candidate;
+        }
+        
+        // Если не найден по ws, ищем любого активного пользователя
+        for (const [_, userData] of userMap) {
+          if (userData.status !== 'idle' && userData.candidate) {
+            console.log(`[PAIR FALLBACK] Using candidate from active user: ${userId} -> ${userData.candidate}`);
+            return userData.candidate;
+          }
+        }
+      }
   
-  
-      return pair;
+      return null;
   
     } catch (err) {
       handleException(ws, 'GET_PAIR', `problem getting peer pair: ${err.message}`, {});
