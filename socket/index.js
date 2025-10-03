@@ -3,7 +3,7 @@
 import {WebSocketServer} from "ws";
 import dotenv from 'dotenv'
 import { parseMessage } from "./parse.js";
-import { removePair, removeUser, users } from "../users/index.js";
+import { removePair, removeUser, users, preservedUserData } from "../users/index.js";
 import { sendBroadcast } from "../logger/telegramLogs.js";
 import { startHeartbeat } from "../actions/pingActions.js";
 dotenv.config()
@@ -39,32 +39,29 @@ webSocket.on('connection', (ws) => {
     ws.on('close', () => {
       console.log(`[WS CLOSE] User ${ws.userId} disconnected`);
       
-      // Проверяем, есть ли активная сессия этого пользователя
+      // НЕ удаляем данные пользователя при закрытии WebSocket
+      // Это позволяет восстановить сессию при переподключении
+      console.log(`[WS CLOSE] Preserving user data for potential reconnection: ${ws.userId}`);
+      
+      // Просто удаляем WebSocket соединение, но сохраняем данные пользователя
       const userMap = users[ws.userId];
-      let hasActiveSession = false;
-      
-      if (userMap && userMap.size > 0) {
-        // Проверяем, есть ли другие активные соединения этого пользователя
-        for (const [otherWs, userData] of userMap) {
-          if (otherWs !== ws && userData.status !== 'idle') {
-            hasActiveSession = true;
-            console.log(`[WS CLOSE] User ${ws.userId} has active session, not removing`);
-            break;
+      if (userMap) {
+        userMap.delete(ws);
+        console.log(`[WS CLOSE] Removed WebSocket connection for ${ws.userId}, user data preserved`);
+        
+        // Если это был последний WebSocket соединение, сохраняем данные пользователя
+        if (userMap.size === 0) {
+          console.log(`[WS CLOSE] All connections closed for ${ws.userId}, preserving user data for reconnection`);
+          
+          // Сохраняем данные пользователя для возможного восстановления
+          const lastUserData = Array.from(userMap.values())[0];
+          if (lastUserData && (lastUserData.status !== 'idle' || lastUserData.candidate)) {
+            preservedUserData[ws.userId] = {
+              ...lastUserData,
+              preservedAt: Date.now()
+            };
+            console.log(`[WS CLOSE] Preserved user data for ${ws.userId}: status=${lastUserData.status}, candidate=${lastUserData.candidate}`);
           }
-        }
-      }
-      
-      if (!hasActiveSession) {
-        // Удаляем только если нет других активных сессий
-        console.log(`[WS CLOSE] Removing user ${ws.userId} - no active sessions`);
-        removePair({ ws, userId: ws.userId })
-        removeUser(ws)
-        sendBroadcast(`[LEAVE USER]: ${ws.userId}`)
-      } else {
-        // Просто удаляем это соединение, но сохраняем данные пользователя
-        console.log(`[WS CLOSE] Removing only WebSocket connection for ${ws.userId}`);
-        if (userMap) {
-          userMap.delete(ws);
         }
       }
       

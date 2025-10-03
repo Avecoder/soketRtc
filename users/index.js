@@ -7,6 +7,7 @@ import { sendMessage } from "../socket/send.js";
 export const users = {}
 export const pairOfPeers = {}
 export const waitingList = {}
+export const preservedUserData = {} // Хранилище для сохранения данных пользователей при разрыве соединения
 
 
 

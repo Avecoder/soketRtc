@@ -1,7 +1,7 @@
 import { handleException } from "../logger/sendError.js"
 import { sendBroadcast } from "../logger/telegramLogs.js";
 import { sendCancelMessage, sendMessage } from "../socket/send.js";
-import { users, getFromWaitingList, removeFromWaitingList, waitingList, setPair } from "../users/index.js"
+import { users, getFromWaitingList, removeFromWaitingList, waitingList, setPair, preservedUserData } from "../users/index.js"
 import { v4 as uuidv4 } from 'uuid';
 
 
@@ -94,6 +94,16 @@ export const handleAddUser = ({ ws, userId, name, photo = "", device = 'mobile' 
             
             if (!isReconnect) {
                 console.log(`[ADD_USER DEBUG] No active session found for user ${userId} - creating new session`);
+            }
+        } else if (existingUserMap && existingUserMap.size === 0) {
+            // UserMap существует, но пуст - проверяем сохраненные данные
+            console.log(`[ADD_USER DEBUG] Empty user map exists for ${userId} - checking for preserved data`);
+            const preservedData = preservedUserData[userId];
+            if (preservedData && (preservedData.status !== 'idle' || preservedData.candidate)) {
+                console.log(`[PRESERVED DATA FOUND] User ${userId}: status=${preservedData.status}, candidate=${preservedData.candidate}`);
+                existingUserData = preservedData;
+                isReconnect = true;
+                delete preservedUserData[userId]; // Удаляем из сохраненных данных
             }
         } else {
             console.log(`[ADD_USER DEBUG] No existing user map for ${userId} - creating new user`);
