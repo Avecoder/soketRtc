@@ -74,10 +74,11 @@ export const handleAddUser = ({ ws, userId, name, photo = "", device = 'mobile' 
         if (existingUserMap && existingUserMap.size > 0) {
             // Находим активную сессию (не idle или с активным звонком)
             for (const [oldWs, userData] of existingUserMap) {
+                console.log(`[RECONNECT CHECK] User ${userId}: status=${userData.status}, candidate=${userData.candidate}`);
                 if (userData.status !== 'idle' || userData.candidate) {
                     existingUserData = userData;
                     isReconnect = true;
-                    console.log(`[RECONNECT DETECTED] User ${userId} reconnecting with status: ${userData.status}`);
+                    console.log(`[RECONNECT DETECTED] User ${userId} reconnecting with status: ${userData.status}, candidate: ${userData.candidate}`);
                     sendBroadcast(`🔄 [RECONNECT] User ${userId} reconnecting during ${userData.status} status`);
                     
                     // Удаляем старое соединение
@@ -135,9 +136,13 @@ export const handleAddUser = ({ ws, userId, name, photo = "", device = 'mobile' 
         console.log('ADD USER: ', `UUID: ${uuid}: ${userId} (reconnect: ${isReconnect})`)
 
         // Если это переподключение во время активного звонка, восстанавливаем связи и уведомляем собеседника
+        console.log(`[RECONNECT LOGIC] isReconnect=${isReconnect}, candidate=${userData.candidate}, status=${userData.status}`);
         if (isReconnect && userData.candidate && (userData.status === 'in_call' || userData.status === 'ringing' || userData.status === 'calling')) {
             const candidateId = userData.candidate;
             const candidateUser = users[candidateId];
+            
+            console.log(`[PAIR RESTORE] Starting restoration for ${userId} -> ${candidateId}`);
+            console.log(`[PAIR RESTORE] Candidate user exists:`, !!candidateUser);
             
             if (candidateUser) {
                 // Восстанавливаем глобальную пару в pairOfPeers
@@ -146,6 +151,7 @@ export const handleAddUser = ({ ws, userId, name, photo = "", device = 'mobile' 
 
                 // Восстанавливаем обратную связь у партнера
                 for (const [_, partnerData] of candidateUser) {
+                    console.log(`[PAIR RESTORE] Checking partner: status=${partnerData.status}, candidate=${partnerData.candidate}`);
                     if (partnerData.candidate === userId) {
                         // Связь уже есть, все ок
                         console.log(`[LINK OK] Link from ${candidateId} to ${userId} already exists`);
@@ -167,6 +173,8 @@ export const handleAddUser = ({ ws, userId, name, photo = "", device = 'mobile' 
             } else {
                 console.warn(`[PAIR RESTORE WARNING] Candidate user ${candidateId} not found for ${userId}`);
             }
+        } else {
+            console.log(`[RECONNECT LOGIC] Skipping restoration: isReconnect=${isReconnect}, candidate=${userData.candidate}, status=${userData.status}`);
         }
 
         checkExistUserInWaitingList(userId)
