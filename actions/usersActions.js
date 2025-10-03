@@ -1,7 +1,7 @@
 import { handleException } from "../logger/sendError.js"
 import { sendBroadcast } from "../logger/telegramLogs.js";
 import { sendCancelMessage, sendMessage } from "../socket/send.js";
-import { users, getFromWaitingList, removeFromWaitingList, waitingList, setPair, preservedUserData } from "../users/index.js"
+import { users, getFromWaitingList, removeFromWaitingList, waitingList, setPair, preservedUserData, pairOfPeers } from "../users/index.js"
 import { v4 as uuidv4 } from 'uuid';
 
 
@@ -167,6 +167,16 @@ export const handleAddUser = ({ ws, userId, name, photo = "", device = 'mobile' 
 
         // Если это переподключение во время активного звонка, восстанавливаем связи и уведомляем собеседника
         console.log(`[RECONNECT LOGIC] isReconnect=${isReconnect}, candidate=${userData.candidate}, status=${userData.status}`);
+        
+        // Дополнительная проверка: если у пользователя нет candidate, но есть активная пара в pairOfPeers
+        if (isReconnect && !userData.candidate) {
+            const pairFromGlobal = pairOfPeers[userId];
+            if (pairFromGlobal) {
+                console.log(`[CANDIDATE RESTORE] Restoring candidate from global pair: ${userId} -> ${pairFromGlobal}`);
+                userData.candidate = pairFromGlobal;
+            }
+        }
+        
         if (isReconnect && userData.candidate && (userData.status === 'in_call' || userData.status === 'ringing' || userData.status === 'calling')) {
             const candidateId = userData.candidate;
             const candidateUser = users[candidateId];
