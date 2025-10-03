@@ -129,6 +129,12 @@ export const handleAddUser = ({ ws, userId, name, photo = "", device = 'mobile' 
             };
             
             console.log(`[SESSION RESTORED] User ${userId}: status=${userData.status}, candidate=${userData.candidate}`);
+            console.log(`[SESSION RESTORED] Original data:`, {
+                status: existingUserData.status,
+                candidate: existingUserData.candidate,
+                iceParams: existingUserData.iceParams?.length || 0,
+                candidateIce: existingUserData.candidateIce?.length || 0
+            });
             sendBroadcast(`✅ [SESSION RESTORED] User ${userId} session restored with status: ${userData.status}`);
         } else {
             // Новая сессия

@@ -33,8 +33,11 @@ export const getPair = ({ userId, ws }) => {
       // Если не найдено - ищем в данных пользователя (fallback для переподключений)
       const userMap = users[userId];
       if (userMap && userMap.size > 0) {
+        console.log(`[PAIR FALLBACK] Searching in userMap for ${userId}, size: ${userMap.size}`);
+        
         // Сначала пытаемся найти по конкретному WebSocket
         const userByWs = userMap.get(ws);
+        console.log(`[PAIR FALLBACK] User by ws:`, userByWs ? {status: userByWs.status, candidate: userByWs.candidate} : 'not found');
         if (userByWs && userByWs.candidate) {
           console.log(`[PAIR FALLBACK] Using candidate from userData (by ws): ${userId} -> ${userByWs.candidate}`);
           return userByWs.candidate;
@@ -42,6 +45,7 @@ export const getPair = ({ userId, ws }) => {
         
         // Если не найден по ws, ищем любого активного пользователя
         for (const [_, userData] of userMap) {
+          console.log(`[PAIR FALLBACK] Checking user: status=${userData.status}, candidate=${userData.candidate}`);
           if (userData.status !== 'idle' && userData.candidate) {
             console.log(`[PAIR FALLBACK] Using candidate from active user: ${userId} -> ${userData.candidate}`);
             return userData.candidate;
