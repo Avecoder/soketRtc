@@ -228,6 +228,13 @@ export const getUserByWs = (userId, ws) => {
     const userByWs = userMap.get(ws);
     if (userByWs) {
       console.log(`[getUserByWs] Found user by ws: ${userId}, status=${userByWs.status}, candidate=${userByWs.candidate}`);
+      
+      // FALLBACK: Если candidate undefined, но есть пара в pairOfPeers - восстанавливаем
+      if (!userByWs.candidate && pairOfPeers[userId]) {
+        console.log(`[getUserByWs] Restoring candidate from pairOfPeers: ${userId} -> ${pairOfPeers[userId]}`);
+        userByWs.candidate = pairOfPeers[userId];
+      }
+      
       return userByWs;
     }
 
