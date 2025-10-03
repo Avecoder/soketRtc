@@ -37,30 +37,52 @@ export const handleUpdateMedia = ({ws,userId, ...data}) => {
   try {
     if(!ws.userId) throw new Error('userId is required');
 
+    console.log(`[DEBUG MEDIA] User: ${ws.userId}, Status check starting...`);
+
     // Получаем текущего пользователя с новой логикой
     const me = getUserByWs(ws.userId, ws);
-    if (!me) throw new Error('Current user not found');
+    if (!me) {
+      console.log(`[DEBUG MEDIA] Current user not found for ${ws.userId}`);
+      throw new Error('Current user not found');
+    }
 
-    console.log('ME CANDIDATE: ', me?.candidate)
+    console.log(`[DEBUG MEDIA] User found: status=${me.status}, candidate=${me.candidate}`);
     
     const candidateId = me.candidate;
-    if (!candidateId) throw new Error('Candidate ID not found');
+    if (!candidateId) {
+      console.log(`[DEBUG MEDIA] No candidate found for user ${ws.userId}`);
+      console.log(`[DEBUG MEDIA] User data:`, {
+        status: me.status,
+        candidate: me.candidate,
+        userId: me.userId
+      });
+      throw new Error('Candidate ID not found');
+    }
 
+    console.log(`[DEBUG MEDIA] Looking for candidate: ${candidateId}`);
     const candidate = users[candidateId];
-    if (!candidate) throw new Error('Candidate not found');
+    if (!candidate) {
+      console.log(`[DEBUG MEDIA] Candidate user ${candidateId} not found in users`);
+      console.log(`[DEBUG MEDIA] Available users:`, Object.keys(users));
+      throw new Error('Candidate not found');
+    }
     
     const candidateActive = isSendingOnePeers(candidate)
+    console.log(`[DEBUG MEDIA] Candidate active:`, candidateActive ? 'yes' : 'no');
 
     console.log('[ENABLED STREAMS]: ', data)
 
     if(!candidateActive) {
+      console.log(`[DEBUG MEDIA] Sending to all candidate connections`);
       for(const [_, p] of candidate) {
         p.ws.send(formData('/updateMedia', data))
       }
       return;
     } 
+    console.log(`[DEBUG MEDIA] Sending to active candidate`);
     candidateActive.ws.send(formData('/updateMedia', data))
   } catch(err) {
+    console.log(`[DEBUG MEDIA ERROR] ${err.message}`);
     handleException(ws ?? null, 'handleUpdateMedia', err, {...data})
   }
 }

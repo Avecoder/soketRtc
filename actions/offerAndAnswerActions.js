@@ -95,10 +95,32 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
             }
         } else {
             // Для обновления offer ищем партнера через getPair
-            if (!checkPair) throw new Error('No active pair found for update');
-            peer2 = users[checkPair];
-            if(!peer2) throw new Error('Peer2 not found');
-            candidateId = checkPair; // Устанавливаем candidateId для дальнейшего использования
+            console.log(`[DEBUG OFFER] Update mode: checkPair=${checkPair} for user ${userId}`);
+            console.log(`[DEBUG OFFER] User data:`, peerWs1 ? {status: peerWs1.status, candidate: peerWs1.candidate} : 'not found');
+            
+            if (!checkPair) {
+                console.log(`[DEBUG OFFER] No pair found in pairOfPeers, checking userData.candidate`);
+                const userCandidate = peerWs1?.candidate;
+                if (userCandidate) {
+                    console.log(`[DEBUG OFFER] Using candidate from userData: ${userCandidate}`);
+                    peer2 = users[userCandidate];
+                    candidateId = userCandidate;
+                } else {
+                    console.log(`[DEBUG OFFER] No candidate found anywhere for user ${userId}`);
+                    throw new Error('No active pair found for update');
+                }
+            } else {
+                peer2 = users[checkPair];
+                candidateId = checkPair;
+            }
+            
+            if(!peer2) {
+                console.log(`[DEBUG OFFER] Peer2 not found for candidateId: ${candidateId}`);
+                console.log(`[DEBUG OFFER] Available users:`, Object.keys(users));
+                throw new Error('Peer2 not found');
+            }
+            
+            console.log(`[DEBUG OFFER] Found peer2 for candidate: ${candidateId}`);
         }
         
         const peerData2 = isSendingOnePeers(peer2)
