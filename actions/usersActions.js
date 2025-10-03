@@ -71,10 +71,15 @@ export const handleAddUser = ({ ws, userId, name, photo = "", device = 'mobile' 
         let isReconnect = false;
         let existingUserData = null;
 
+        console.log(`[ADD_USER DEBUG] Checking for existing session: userId=${userId}`);
+        console.log(`[ADD_USER DEBUG] existingUserMap exists:`, !!existingUserMap);
+        console.log(`[ADD_USER DEBUG] existingUserMap size:`, existingUserMap?.size || 0);
+
         if (existingUserMap && existingUserMap.size > 0) {
+            console.log(`[ADD_USER DEBUG] Checking existing sessions for user ${userId}:`);
             // Находим активную сессию (не idle или с активным звонком)
             for (const [oldWs, userData] of existingUserMap) {
-                console.log(`[RECONNECT CHECK] User ${userId}: status=${userData.status}, candidate=${userData.candidate}`);
+                console.log(`[RECONNECT CHECK] User ${userId}: status=${userData.status}, candidate=${userData.candidate}, wsReady=${oldWs.readyState === 1}`);
                 if (userData.status !== 'idle' || userData.candidate) {
                     existingUserData = userData;
                     isReconnect = true;
@@ -86,6 +91,12 @@ export const handleAddUser = ({ ws, userId, name, photo = "", device = 'mobile' 
                     break;
                 }
             }
+            
+            if (!isReconnect) {
+                console.log(`[ADD_USER DEBUG] No active session found for user ${userId} - creating new session`);
+            }
+        } else {
+            console.log(`[ADD_USER DEBUG] No existing user map for ${userId} - creating new user`);
         }
 
         if (!users[userId]) {
@@ -134,6 +145,9 @@ export const handleAddUser = ({ ws, userId, name, photo = "", device = 'mobile' 
         users[userId].set(ws, userData);
         ws.userId = userId;
         console.log('ADD USER: ', `UUID: ${uuid}: ${userId} (reconnect: ${isReconnect})`)
+        
+        // Отладочная информация о созданном пользователе
+        console.log(`[ADD_USER RESULT] User ${userId}: status=${userData.status}, candidate=${userData.candidate}, isReconnect=${isReconnect}`);
 
         // Если это переподключение во время активного звонка, восстанавливаем связи и уведомляем собеседника
         console.log(`[RECONNECT LOGIC] isReconnect=${isReconnect}, candidate=${userData.candidate}, status=${userData.status}`);
