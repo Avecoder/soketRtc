@@ -219,14 +219,23 @@ export const getActiveUser = (userId) => {
 export const getUserByWs = (userId, ws) => {
   try {
     const userMap = users[userId];
-    if (!userMap || userMap.size === 0) return null;
+    if (!userMap || userMap.size === 0) {
+      console.log(`[getUserByWs] No userMap for ${userId}`);
+      return null;
+    }
 
     // Сначала пытаемся найти по конкретному WebSocket
     const userByWs = userMap.get(ws);
-    if (userByWs) return userByWs;
+    if (userByWs) {
+      console.log(`[getUserByWs] Found user by ws: ${userId}, status=${userByWs.status}, candidate=${userByWs.candidate}`);
+      return userByWs;
+    }
 
     // Если не найден по ws, возвращаем активного пользователя
-    return getActiveUser(userId);
+    console.log(`[getUserByWs] User not found by ws, trying getActiveUser for ${userId}`);
+    const activeUser = getActiveUser(userId);
+    console.log(`[getUserByWs] Active user:`, activeUser ? {status: activeUser.status, candidate: activeUser.candidate} : 'not found');
+    return activeUser;
   } catch (err) {
     console.log('getUserByWs error:', err);
     return null;
