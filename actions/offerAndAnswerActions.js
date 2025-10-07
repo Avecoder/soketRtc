@@ -8,14 +8,24 @@ import { setPair, users, getPair, pairOfPeers, removePair, updateStatus, isSendi
 const mapPeers = (peers , callback = () => {}) => {
     let peer = null
     let candidate = peers[0]
+    console.log(`[MAPPEERS DEBUG] Looking for peers in:`, peers);
+    console.log(`[MAPPEERS DEBUG] Available users:`, Object.keys(users));
+    
     for(const c of peers) {
         const findedPeer = users[c]
+        console.log(`[MAPPEERS DEBUG] Checking candidate ${c}:`, !!findedPeer);
         if(findedPeer) {
+            console.log(`[MAPPEERS DEBUG] User ${c} details:`, {
+                size: findedPeer.size,
+                hasActiveConnections: Array.from(findedPeer.values()).some(u => u.status !== 'idle')
+            });
             peer = findedPeer
             candidate = c
+            console.log(`[MAPPEERS DEBUG] Found peer for candidate ${c}`);
             break; 
         }
     }
+    console.log(`[MAPPEERS DEBUG] Result: peer=`, !!peer, 'candidate=', candidate);
     callback(peer, candidate)
 }
 
@@ -66,6 +76,14 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
      
         const candidateList = parseCandidates(candidates);
 
+
+        // Логируем всех подключенных пользователей
+        const connectedUsers = Object.keys(users).filter(userId => {
+            const userMap = users[userId];
+            return userMap && userMap.size > 0;
+        });
+        console.log(`[OFFER DEBUG] Connected users: [${connectedUsers.join(', ')}]`);
+        console.log(`[OFFER DEBUG] Trying to call: [${candidateList.join(', ')}]`);
 
         mapPeers(candidateList, (peer, candidate) => {
             peer2 = peer;
