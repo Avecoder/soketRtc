@@ -1,7 +1,7 @@
 import { handleException } from "../logger/sendError.js"
 import { sendBroadcast } from "../logger/telegramLogs.js";
 import { sendCancelMessage, sendMessage } from "../socket/send.js";
-import { users, getFromWaitingList, removeFromWaitingList, waitingList, setPair, preservedUserData, pairOfPeers } from "../users/index.js"
+import { users, getFromWaitingList, removeFromWaitingList, waitingList, } from "../users/index.js"
 import { v4 as uuidv4 } from 'uuid';
 
 
