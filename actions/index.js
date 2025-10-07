@@ -1,6 +1,6 @@
 export {handleOffer, handleDecline, handleAnswer } from './offerAndAnswerActions.js'
 export {handleAddIce, handleSwap} from './iceCandidatesActions.js'
-export {handleAddUser} from './usersActions.js'
+export {handleAddUser, handleReconnect} from './usersActions.js'
 export {handleSetRemoteStreamId, handleUpdateMedia} from './streams.js'
 export {handleUpdateAnswer, handleUpdateOffer} from './updateSpdActions.js'
 export {handlePing, startHeartbeat} from './pingActions.js'

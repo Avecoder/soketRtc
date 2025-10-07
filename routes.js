@@ -6,6 +6,7 @@ import {
     handleSwap, 
     handleSetRemoteStreamId, 
     handleAddUser,
+    handleReconnect,
     handleUpdateAnswer,
     handleUpdateOffer,
     handleUpdateMedia,
@@ -19,7 +20,8 @@ import {
 
 
 export const routes = { 
-    'ADD_USER': handleAddUser, // ++ 
+    'ADD_USER': handleAddUser, // Новый пользователь
+    'RECONNECT': handleReconnect, // Реконнект при проблемах с ping-pong
     'OFFER': handleOffer, // ++
     'ANSWER': handleAnswer, // ++
     'SWAP_ICE': handleSwap, // ++
