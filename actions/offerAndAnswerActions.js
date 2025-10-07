@@ -119,23 +119,35 @@ export const handleOffer = ({ ws, candidates, candidateId: oldId, userId, isUpda
             for(const [_, p] of peer1) {
                 p.candidate = `${candidateId}`;
             }
-            for(const [_, p] of peer2) {
-                p.candidate = `${userId}`;
+            
+            // Проверяем что peer2 существует перед итерацией
+            if (peer2 && peer2.size > 0) {
+                for(const [_, p] of peer2) {
+                    p.candidate = `${userId}`;
+                }
+            } else {
+                console.log(`[OFFER ERROR] peer2 is not available:`, peer2);
+                throw new Error(`Target user ${candidateId} not found or not available`);
             }
             
 
 
-            sendMessage('/call', peer2, {
-                ...data, // например, SDP offer, reconnect-флаг и т.п.
-                userId,
-                name: name ?? peerWs1.name, // имя вызывающего (раньше было offerUser — возможно, ошибка)
-                photo: peerWs1.photo, // имя вызывающего (раньше было offerUser — возможно, ошибка)
-                candidates: userId,
-                device: peerWs1.device
-            }); 
+            // Отправляем сообщение только если peer2 валидный
+            if (peer2 && peer2.size > 0) {
+                sendMessage('/call', peer2, {
+                    ...data, // например, SDP offer, reconnect-флаг и т.п.
+                    userId,
+                    name: name ?? peerWs1.name, // имя вызывающего (раньше было offerUser — возможно, ошибка)
+                    photo: peerWs1.photo, // имя вызывающего (раньше было offerUser — возможно, ошибка)
+                    candidates: userId,
+                    device: peerWs1.device
+                });
+            } 
         }
-        // Устанавливаем ссылки на кандидатов друг у друга
-        sendMessage('/remoteStreamsId', peer2, {streamIds: peerWs1.streamIds})
+        // Устанавливаем ссылки на кандидатов друг у друга (только если peer2 валидный)
+        if (peer2 && peer2.size > 0) {
+            sendMessage('/remoteStreamsId', peer2, {streamIds: peerWs1.streamIds});
+        }
 
     } catch (err) {
 

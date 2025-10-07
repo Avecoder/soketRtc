@@ -146,6 +146,7 @@ export const getFromWaitingList = ({userId}) => {
 
 export const isSendingOnePeers = (sender) => {
   try {
+    if (!sender || !sender.size) return false;
     
     const user = Array.from(sender).find(([_, user]) => user.status !== 'idle')
     // console.log('LIST: ', Array.from(sender).filter(([_, user]) => user.status !== 'idle'))
