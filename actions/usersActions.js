@@ -196,7 +196,26 @@ function getCurrentTime() {
     return `${hours}:${minutes}:${seconds}`;
   }
 
-// setInterval(() => {
-// }, 5000)
+// Выводим список пользователей каждые 5 секунд
+setInterval(() => {
+    const connectedUsers = Object.keys(users).filter(userId => {
+        const userMap = users[userId];
+        return userMap && userMap.size > 0;
+    });
+    
+    if (connectedUsers.length > 0) {
+        console.log(`[USERS LIST] Connected users: [${connectedUsers.join(', ')}]`);
+        
+        // Дополнительная информация о каждом пользователе
+        connectedUsers.forEach(userId => {
+            const userMap = users[userId];
+            const userCount = userMap.size;
+            const userData = Array.from(userMap.values())[0];
+            console.log(`[USER ${userId}] connections: ${userCount}, status: ${userData?.status || 'unknown'}`);
+        });
+    } else {
+        console.log(`[USERS LIST] No users connected`);
+    }
+}, 5000)
 
 
