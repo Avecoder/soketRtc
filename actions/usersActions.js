@@ -147,41 +147,16 @@ export const handleReconnect = ({ ws, userId, name, photo = "", device = 'mobile
 
 export const handleAddUser = ({ ws, userId, name, photo = "", device = 'mobile' }) => {
     try {
+        console.log('[ADD_USER]: ', userId, 'name:', name, 'device:', device);
         if (!userId) throw new Error("<b>userId</b> is required");
 
-        // Проверяем, есть ли уже активная сессия этого пользователя
-        const existingUserMap = users[userId];
-        if (existingUserMap && existingUserMap.size > 0) {
-            // Очищаем мертвые соединения
-            let activeCount = 0;
-            for (const [oldWs, userData] of existingUserMap) {
-                if (oldWs.readyState === 1) {
-                    activeCount++;
-                } else {
-                    existingUserMap.delete(oldWs);
-                }
-            }
-            
-            // Если есть активные соединения, отклоняем новое подключение
-            if (activeCount > 0) {
-                sendBroadcast(`⚠️ [DUPLICATE] User ${userId} already has ${activeCount} active connections`);
-                ws.send(JSON.stringify({
-                    type: 'userExists',
-                    message: `User ${userId} already connected. Use RECONNECT instead.`,
-                    activeConnections: activeCount
-                }));
-                return;
-            }
-        }
-
-        // Если нет существующего пользователя, создаем новый Map
         if (!users[userId]) {
             users[userId] = new Map();
+            console.log(`[ADD_USER] Created new userMap for ${userId}`);
         }
 
         const uuid = uuidv4();
 
-        // Создаем новую сессию
         const userData = {
             ws,
             userId,
@@ -199,35 +174,17 @@ export const handleAddUser = ({ ws, userId, name, photo = "", device = 'mobile' 
             // in_call - Пользователь в активном звонке
             // ended - Звонок завершился, но еще не сброшено состояние
             streamIds: {},
-            isReady: false, // Новая сессия - нужна задержка
         };
 
         users[userId].set(ws, userData);
         ws.userId = userId;
-        
-        // Добавляем задержку перед готовностью для новых пользователей
-        setTimeout(() => {
-            const currentUserData = users[userId]?.get(ws);
-            if (currentUserData) {
-                currentUserData.isReady = true;
-                sendBroadcast(`✅ [USER READY] User ${userId} is ready to receive messages`);
-            }
-        }, 1000); // 1 секунда задержки для новых пользователей
-
-        // Отправляем подтверждение подключения
-        ws.send(JSON.stringify({
-            type: 'userAdded',
-            userId: userId,
-            status: userData.status,
-            message: 'New user added successfully'
-        }));
-
-        sendBroadcast(`✅ [USER ADDED] User ${userId} added with status: ${userData.status}`);
+        console.log(`[ADD_USER] User ${userId} added. Total users:`, Object.keys(users));
 
         checkExistUserInWaitingList(userId);
 
     } catch (err) {
-        handleException(ws, 'ADD_USER', err, { userId, name, photo, device });
+        console.log(`[ADD_USER ERROR] User ${userId}:`, err.message);
+        handleException(ws, 'ADD_USER', err, { userId, name });
     }
 };
 
