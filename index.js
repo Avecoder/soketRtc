@@ -6,5 +6,3 @@ dotenv.config()
 
 
 export const PORT = process.env.WS_PORT || 5555;
-
-console.log('Run server on port:', PORT)

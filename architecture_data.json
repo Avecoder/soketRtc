@@ -1,0 +1,454 @@
+{
+  "nodes": [
+    {
+      "id": "client1",
+      "x": 100,
+      "y": 400,
+      "label": "Client 1",
+      "type": "circle",
+      "description": "Внешний клиент (WebRTC + WebSocket). Подключается к WebSocket серверу для сигналинга WebRTC соединений. Отправляет PING каждые 60 секунд. Может иметь несколько WebSocket соединений одновременно."
+    },
+    {
+      "id": "client2",
+      "x": 100,
+      "y": 600,
+      "label": "Client 2",
+      "type": "circle",
+      "description": "Внешний клиент (WebRTC + WebSocket). Подключается к WebSocket серверу для сигналинга WebRTC соединений. Отправляет PING каждые 60 секунд. Может иметь несколько WebSocket соединений одновременно."
+    },
+    {
+      "id": "websocket-server",
+      "x": 400,
+      "y": 500,
+      "label": "WebSocket Server",
+      "type": "rectangle",
+      "description": "WebSocketServer на порту 5555. Обрабатывает connection, message и close события. При подключении: отправляет 'userConnect', инициализирует ws.lastPingTime. При закрытии: вызывает removePair и removeUser."
+    },
+    {
+      "id": "onConnection",
+      "x": 300,
+      "y": 380,
+      "label": "on('connection')",
+      "type": "circle",
+      "description": "Событие подключения нового WebSocket клиента. Отправляет уведомление в Telegram, отправляет клиенту {type: 'userConnect'}, инициализирует ws.lastPingTime = Date.now()."
+    },
+    {
+      "id": "onClose",
+      "x": 300,
+      "y": 620,
+      "label": "on('close')",
+      "type": "circle",
+      "description": "Событие закрытия WebSocket соединения. Вызывает removePair для удаления пары пользователей, removeUser для очистки пользователя, отправляет уведомление в Telegram."
+    },
+    {
+      "id": "parse",
+      "x": 600,
+      "y": 500,
+      "label": "parse.js",
+      "type": "rectangle",
+      "description": "Парсинг входящих сообщений. Проверяет тип: если 'PING' (простая строка) - обновляет ws.lastPingTime и возвращает handlePing. Если JSON - извлекает route, userId, data и возвращает соответствующий handler из routes."
+    },
+    {
+      "id": "routes",
+      "x": 800,
+      "y": 500,
+      "label": "routes.js",
+      "type": "rectangle",
+      "description": "Маршрутизация сообщений. Объект с маппингом route → handler function. Поддерживает: ADD_USER, RECONNECT, OFFER, ANSWER, DECLINE, ADD_ICE, SWAP_ICE, SET_REMOTE_STREAM_ID, UPDATE_OFFER, UPDATE_ANSWER, MEDIA_UPDATE, PING."
+    },
+    {
+      "id": "handleAddUser",
+      "x": 1000,
+      "y": 150,
+      "label": "handleAddUser",
+      "type": "rectangle",
+      "description": "Добавление нового пользователя. Создает или обновляет users[userId] Map. Генерирует UUID для сессии, создает UserData объект (ws, userId, name, photo, device, status: 'idle', iceParams, streamIds). Вызывает checkExistUserInWaitingList для обработки входящих звонков."
+    },
+    {
+      "id": "checkExistUserInWaitingList",
+      "x": 1000,
+      "y": 80,
+      "label": "checkExistUserInWaitingList",
+      "type": "circle",
+      "description": "Проверка входящих звонков для нового пользователя. Ищет данные в waitingList[userId]. Если найдено и action != 'cancel' - устанавливает candidate связи и отправляет /call. Если action == 'cancel' - отправляет /cancel. Удаляет запись из waitingList."
+    },
+    {
+      "id": "handleReconnect",
+      "x": 1000,
+      "y": 220,
+      "label": "handleReconnect",
+      "type": "rectangle",
+      "description": "Восстановление сессии пользователя при переподключении. Очищает мертвые WebSocket соединения. Восстанавливает состояние: статус, candidate, streamIds, name, photo, device. Отправляет reconnectSuccess клиенту. Если есть candidate - уведомляет его через /peerReconnected."
+    },
+    {
+      "id": "handleOffer",
+      "x": 1000,
+      "y": 290,
+      "label": "handleOffer",
+      "type": "rectangle",
+      "description": "Обработка WebRTC Offer. Парсит candidates (может быть массив или строка). Ищет peer2 среди кандидатов через mapPeers. Устанавливает статус 'calling'. Если isUpdate=false - добавляет в waitingList, устанавливает candidate связи в обе стороны, отправляет /call и /remoteStreamsId. Если isUpdate=true - отправляет /updateOffer."
+    },
+    {
+      "id": "mapPeers",
+      "x": 1100,
+      "y": 290,
+      "label": "mapPeers",
+      "type": "circle",
+      "description": "Вспомогательная функция для поиска первого доступного пира из списка кандидатов. Итерируется по массиву candidates, проверяет существование users[candidate], возвращает найденного пира и его ID."
+    },
+    {
+      "id": "parseCandidates",
+      "x": 1100,
+      "y": 350,
+      "label": "parseCandidates",
+      "type": "circle",
+      "description": "Вспомогательная функция для парсинга candidates. Поддерживает: массив (возвращает как есть), строку JSON (парсит и возвращает массив), одиночное значение (оборачивает в массив)."
+    },
+    {
+      "id": "handleAnswer",
+      "x": 1000,
+      "y": 360,
+      "label": "handleAnswer",
+      "type": "rectangle",
+      "description": "Обработка WebRTC Answer. Получает candidateId из peerWs2.candidate. Если isUpdate=false - устанавливает статус 'ringing', создает пару через setPair, отправляет /acceptCall инициатору, /remoteStreamsId, /cancel получателю, рассылает /connect, удаляет из waitingList. Если isUpdate=true - отправляет /updateAnswer и /updateIce."
+    },
+    {
+      "id": "handleDecline",
+      "x": 1000,
+      "y": 430,
+      "label": "handleDecline",
+      "type": "rectangle",
+      "description": "Отклонение звонка. Проверяет waitingList - если есть, помечает action='cancel'. Если peer1 не найден - отправляет /cancel себе и устанавливает статус 'idle'. Если status != 'ended' - отправляет /decline инициатору, устанавливает статус 'ended' у инициатора, 'idle' у получателя. Удаляет пару через removePair."
+    },
+    {
+      "id": "handleAddIce",
+      "x": 1000,
+      "y": 500,
+      "label": "handleAddIce",
+      "type": "rectangle",
+      "description": "Сбор ICE кандидатов. Сохраняет iceParams (массив ICE кандидатов) в объекте пользователя (user.iceParams). Используется для последующего обмена при установлении WebRTC соединения."
+    },
+    {
+      "id": "handleSwap",
+      "x": 1000,
+      "y": 570,
+      "label": "handleSwap",
+      "type": "rectangle",
+      "description": "Обмен ICE кандидатами. Получает candidateId из user.candidate. Обменивает iceParams между peer1 и peer2 (peer1.candidateIce = peer2.iceParams и наоборот). Отправляет /swapIce каждому пользователю с кандидатами другого. Устанавливает статус 'in_call' через updateStatus."
+    },
+    {
+      "id": "handleSetRemoteStreamId",
+      "x": 1000,
+      "y": 640,
+      "label": "handleSetRemoteStreamId",
+      "type": "rectangle",
+      "description": "Установка ID удалённого трека. Сохраняет streamIds[kind] = streamId в объекте пользователя. kind может быть 'audio' или 'video'. Используется для управления медиа-треками в WebRTC соединении."
+    },
+    {
+      "id": "handleUpdateMedia",
+      "x": 1000,
+      "y": 710,
+      "label": "handleUpdateMedia",
+      "type": "rectangle",
+      "description": "Обновление медиа-настроек. Находит активного пользователя и его candidate. Если candidate не активен - отправляет /updateMedia всем сессиям. Если активен - отправляет конкретной сессии. Используется для mute/unmute, включения/выключения видео и т.д."
+    },
+    {
+      "id": "handleUpdateOffer",
+      "x": 1200,
+      "y": 260,
+      "label": "handleUpdateOffer",
+      "type": "rectangle",
+      "description": "Обновление SDP Offer. Обертка над handleOffer с флагом isUpdate=true. Используется для реконнекта WebRTC соединения. Отправляет /updateOffer с новым SDP без изменения статусов и создания пары."
+    },
+    {
+      "id": "handleUpdateAnswer",
+      "x": 1200,
+      "y": 330,
+      "label": "handleUpdateAnswer",
+      "type": "rectangle",
+      "description": "Обновление SDP Answer. Обертка над handleAnswer с флагом isUpdate=true. Используется для реконнекта WebRTC соединения. Отправляет /updateAnswer и рассылает /updateIce через broadcast для обновления ICE кандидатов."
+    },
+    {
+      "id": "handlePing",
+      "x": 1000,
+      "y": 780,
+      "label": "handlePing",
+      "type": "rectangle",
+      "description": "Обработка PING сообщения. Отправляет строку 'PONG' обратно клиенту через ws.send('PONG'). Вызывается при получении простой строки 'PING' (lastPingTime уже обновлен в parse.js)."
+    },
+    {
+      "id": "startHeartbeat",
+      "x": 800,
+      "y": 780,
+      "label": "startHeartbeat",
+      "type": "rectangle",
+      "description": "Heartbeat проверка соединений. Запускается один раз при старте сервера. Каждые 30 секунд проверяет все активные соединения. Если timeSinceLastPing > 300000 (5 минут) - закрывает соединение с кодом 1000 и сообщением 'No ping received'."
+    },
+    {
+      "id": "formData",
+      "x": 1300,
+      "y": 450,
+      "label": "formData",
+      "type": "circle",
+      "description": "Вспомогательная функция форматирования данных. Принимает route (например '/call') и data объект. Создает JSON: {type: 'call', ...data} (извлекает имя из route после '/' )."
+    },
+    {
+      "id": "sendMessage",
+      "x": 1200,
+      "y": 500,
+      "label": "sendMessage",
+      "type": "rectangle",
+      "description": "Отправка сообщений клиентам. Форматирует данные через formData. Находит активного пользователя через isSendingOnePeers. Если активный найден - отправляет на его WebSocket. Если нет - отправляет всем сессиям пользователя через Map.forEach."
+    },
+    {
+      "id": "sendCancelMessage",
+      "x": 1300,
+      "y": 550,
+      "label": "sendCancelMessage",
+      "type": "circle",
+      "description": "Отправка сообщения /cancel. Форматирует через formData('/cancel', {}). Отправляет только пользователям со статусом 'idle' (пропускает активные сессии в звонке)."
+    },
+    {
+      "id": "isSendingOnePeers",
+      "x": 1500,
+      "y": 420,
+      "label": "isSendingOnePeers",
+      "type": "circle",
+      "description": "Поиск активного пользователя в Map сессий. Ищет первую сессию со статусом != 'idle' (calling, ringing, in_call, ended). Возвращает UserData объект или false. Используется для отправки сообщений активной сессии."
+    },
+    {
+      "id": "broadcast",
+      "x": 1200,
+      "y": 570,
+      "label": "broadcast.js",
+      "type": "rectangle",
+      "description": "Рассылка сообщений паре. Находит активного пользователя (me) и его candidate. Получает активного кандидата через isSendingOnePeers. Отправляет сообщение обоим одновременно через formData и ws.send. Используется для /connect, /updateIce и т.д."
+    },
+    {
+      "id": "usersStorage",
+      "x": 1400,
+      "y": 150,
+      "label": "users Map",
+      "type": "circle",
+      "description": "Хранилище пользователей. Map<userId, Map<WebSocket, UserData>>. Хранит все активные сессии пользователей. Каждый userId может иметь несколько WebSocket соединений (реконнект, разные вкладки). UserData содержит: ws, userId, uuid, name, photo, device, status, candidate, iceParams, candidateIce, streamIds, muted."
+    },
+    {
+      "id": "pairOfPeers",
+      "x": 1400,
+      "y": 270,
+      "label": "pairOfPeers",
+      "type": "circle",
+      "description": "Пары пользователей. Object {userId: candidateId}. Двунаправленная связь между пользователями в активном звонке. Устанавливается через setPair (создает пару в обе стороны). Используется для быстрого поиска собеседника без итерации по users Map."
+    },
+    {
+      "id": "waitingList",
+      "x": 1400,
+      "y": 390,
+      "label": "waitingList",
+      "type": "circle",
+      "description": "Список ожидающих звонков. Object {userId: callData}. Хранит данные входящих звонков для пользователей, которые еще не обработали ADD_USER. callData содержит: sdp, userId, name, photo, candidates, device, addedAt timestamp. Автоматически очищается через 1 минуту через setInterval."
+    },
+    {
+      "id": "waitingListCleanup",
+      "x": 1400,
+      "y": 320,
+      "label": "Waiting List Cleanup",
+      "type": "circle",
+      "description": "Автоматическая очистка waiting list. setInterval каждые 10 секунд проверяет все записи. Если now - user.addedAt > 60000 (1 минута) - отправляет /decline инициатору звонка и удаляет запись. Предотвращает зависшие звонки."
+    },
+    {
+      "id": "getPair",
+      "x": 1500,
+      "y": 480,
+      "label": "getPair",
+      "type": "circle",
+      "description": "Получение ID пары для пользователя. Возвращает pairOfPeers[userId] или null. Используется для проверки, состоит ли пользователь в активной паре."
+    },
+    {
+      "id": "setPair",
+      "x": 1500,
+      "y": 540,
+      "label": "setPair",
+      "type": "circle",
+      "description": "Создание двунаправленной пары. Устанавливает pairOfPeers[userId] = candidateId и pairOfPeers[candidateId] = userId. Используется при принятии звонка (ANSWER) для связи двух пользователей."
+    },
+    {
+      "id": "removePair",
+      "x": 1500,
+      "y": 600,
+      "label": "removePair",
+      "type": "circle",
+      "description": "Удаление пары пользователей. Удаляет pairOfPeers[userId] и pairOfPeers[peerId] (двунаправленное удаление). Используется при отклонении звонка, закрытии соединения, завершении звонка."
+    },
+    {
+      "id": "removeUser",
+      "x": 1500,
+      "y": 660,
+      "label": "removeUser",
+      "type": "circle",
+      "description": "Удаление пользователя из системы. Сначала вызывает removePair. Если у userId только одна сессия - удаляет весь users[userId] Map. Если несколько - удаляет только конкретный WebSocket из Map. Используется при закрытии соединения."
+    },
+    {
+      "id": "updateStatus",
+      "x": 1500,
+      "y": 720,
+      "label": "updateStatus",
+      "type": "circle",
+      "description": "Обновление статуса пользователя. Находит UserData по ws.userId и WebSocket, обновляет user.status. Возможные статусы: 'idle', 'calling', 'ringing', 'in_call', 'ended'. Используется для отслеживания состояния пользователя в системе."
+    },
+    {
+      "id": "pushInWaitingList",
+      "x": 1500,
+      "y": 780,
+      "label": "pushInWaitingList",
+      "type": "circle",
+      "description": "Добавление звонка в waiting list. Создает запись waitingList[candidateId] = {...data, addedAt: Date.now()}. Используется при OFFER, когда получатель еще не подключился. Отправляет уведомления в Telegram для мониторинга."
+    },
+    {
+      "id": "removeFromWaitingList",
+      "x": 1500,
+      "y": 840,
+      "label": "removeFromWaitingList",
+      "type": "circle",
+      "description": "Удаление записи из waiting list. Удаляет waitingList[userId]. Вызывается после обработки входящего звонка (checkExistUserInWaitingList или handleAnswer)."
+    },
+    {
+      "id": "getFromWaitingList",
+      "x": 1500,
+      "y": 900,
+      "label": "getFromWaitingList",
+      "type": "circle",
+      "description": "Получение данных из waiting list. Возвращает waitingList[userId] или undefined. Используется для проверки наличия входящих звонков при добавлении пользователя."
+    },
+    {
+      "id": "userManagement",
+      "x": 1400,
+      "y": 510,
+      "label": "users/index.js",
+      "type": "rectangle",
+      "description": "Модуль управления пользователями. Экспортирует все функции работы с пользователями, парами и waiting list. Содержит экспорты: users, pairOfPeers, waitingList объекты и все функции управления."
+    },
+    {
+      "id": "handleException",
+      "x": 1100,
+      "y": 850,
+      "label": "sendError.js",
+      "type": "rectangle",
+      "description": "Централизованная обработка ошибок. Принимает ws, handlerName, err, context. Логирует ошибку через logError. Отправляет уведомление в Telegram через sendBroadcast (обрезает до 4096 символов). Отправляет ошибку клиенту через WebSocket в формате JSON: {type: 'error', message, handler, context}."
+    },
+    {
+      "id": "logger",
+      "x": 1400,
+      "y": 710,
+      "label": "logger.js",
+      "type": "rectangle",
+      "description": "Логирование ошибок. Функция logError записывает ошибки в файл logs/server.log с меткой времени, именем обработчика и деталями ошибки. Использует форматирование для удобного чтения логов."
+    },
+    {
+      "id": "telegramLogs",
+      "x": 1400,
+      "y": 810,
+      "label": "telegramLogs.js",
+      "type": "rectangle",
+      "description": "Telegram уведомления. Функция sendBroadcast отправляет сообщения в Telegram канал через node-telegram-bot-api. Используется для мониторинга в реальном времени: подключения пользователей, ошибки, важные события. Поддерживает HTML форматирование."
+    }
+  ],
+  "edges": [
+    { "from": "client1", "to": "websocket-server", "label": "WebSocket Connection" },
+    { "from": "client2", "to": "websocket-server", "label": "WebSocket Connection" },
+    { "from": "websocket-server", "to": "onConnection", "label": "on('connection')" },
+    { "from": "onConnection", "to": "telegramLogs", "label": "sendBroadcast('[USER CONNECT]')" },
+    { "from": "onConnection", "to": "client1", "label": "{type: 'userConnect'}" },
+    { "from": "onConnection", "to": "client2", "label": "{type: 'userConnect'}" },
+    { "from": "websocket-server", "to": "onClose", "label": "on('close')" },
+    { "from": "onClose", "to": "userManagement", "label": "removePair + removeUser" },
+    { "from": "onClose", "to": "telegramLogs", "label": "sendBroadcast('[LEAVE USER]')" },
+    { "from": "websocket-server", "to": "parse", "label": "ws.on('message')" },
+    { "from": "parse", "to": "routes", "label": "route + data" },
+    { "from": "parse", "to": "handlePing", "label": "if 'PING'" },
+    { "from": "routes", "to": "handleAddUser", "label": "ADD_USER" },
+    { "from": "routes", "to": "handleReconnect", "label": "RECONNECT" },
+    { "from": "routes", "to": "handleOffer", "label": "OFFER" },
+    { "from": "routes", "to": "handleAnswer", "label": "ANSWER" },
+    { "from": "routes", "to": "handleDecline", "label": "DECLINE" },
+    { "from": "routes", "to": "handleAddIce", "label": "ADD_ICE" },
+    { "from": "routes", "to": "handleSwap", "label": "SWAP_ICE" },
+    { "from": "routes", "to": "handleSetRemoteStreamId", "label": "SET_REMOTE_STREAM_ID" },
+    { "from": "routes", "to": "handleUpdateMedia", "label": "MEDIA_UPDATE" },
+    { "from": "routes", "to": "handleUpdateOffer", "label": "UPDATE_OFFER" },
+    { "from": "routes", "to": "handleUpdateAnswer", "label": "UPDATE_ANSWER" },
+    { "from": "routes", "to": "handlePing", "label": "PING" },
+    { "from": "websocket-server", "to": "startHeartbeat", "label": "startHeartbeat()" },
+    { "from": "startHeartbeat", "to": "usersStorage", "label": "check all ws" },
+    { "from": "handleAddUser", "to": "checkExistUserInWaitingList", "label": "after create user" },
+    { "from": "checkExistUserInWaitingList", "to": "waitingList", "label": "getFromWaitingList()" },
+    { "from": "checkExistUserInWaitingList", "to": "sendMessage", "label": "sendMessage('/call')" },
+    { "from": "checkExistUserInWaitingList", "to": "sendCancelMessage", "label": "if action='cancel'" },
+    { "from": "checkExistUserInWaitingList", "to": "removeFromWaitingList", "label": "after send" },
+    { "from": "handleOffer", "to": "mapPeers", "label": "find peer" },
+    { "from": "handleOffer", "to": "parseCandidates", "label": "parse input" },
+    { "from": "handleOffer", "to": "updateStatus", "label": "status = 'calling'" },
+    { "from": "handleOffer", "to": "pushInWaitingList", "label": "if !isUpdate" },
+    { "from": "handleOffer", "to": "sendMessage", "label": "sendMessage('/call')" },
+    { "from": "handleOffer", "to": "sendMessage", "label": "sendMessage('/remoteStreamsId')" },
+    { "from": "handleOffer", "to": "sendMessage", "label": "sendMessage('/updateOffer')" },
+    { "from": "handleAnswer", "to": "updateStatus", "label": "status = 'ringing'" },
+    { "from": "handleAnswer", "to": "setPair", "label": "create pair" },
+    { "from": "handleAnswer", "to": "sendMessage", "label": "sendMessage('/acceptCall')" },
+    { "from": "handleAnswer", "to": "sendMessage", "label": "sendMessage('/remoteStreamsId')" },
+    { "from": "handleAnswer", "to": "sendCancelMessage", "label": "sendCancelMessage()" },
+    { "from": "handleAnswer", "to": "broadcast", "label": "broadcast('/connect')" },
+    { "from": "handleAnswer", "to": "removeFromWaitingList", "label": "after accept" },
+    { "from": "handleAnswer", "to": "sendMessage", "label": "sendMessage('/updateAnswer')" },
+    { "from": "handleAnswer", "to": "broadcast", "label": "broadcast('/updateIce')" },
+    { "from": "handleDecline", "to": "getFromWaitingList", "label": "check waiting list" },
+    { "from": "handleDecline", "to": "pushInWaitingList", "label": "mark cancel" },
+    { "from": "handleDecline", "to": "updateStatus", "label": "status = 'idle'/'ended'" },
+    { "from": "handleDecline", "to": "sendMessage", "label": "sendMessage('/decline')" },
+    { "from": "handleDecline", "to": "sendCancelMessage", "label": "sendCancelMessage()" },
+    { "from": "handleDecline", "to": "removePair", "label": "remove pair" },
+    { "from": "handleSwap", "to": "isSendingOnePeers", "label": "find active peer" },
+    { "from": "handleSwap", "to": "updateStatus", "label": "status = 'in_call'" },
+    { "from": "handleSwap", "to": "sendMessage", "label": "sendMessage('/swapIce')" },
+    { "from": "handleUpdateMedia", "to": "isSendingOnePeers", "label": "find active users" },
+    { "from": "handleUpdateMedia", "to": "sendMessage", "label": "sendMessage('/updateMedia')" },
+    { "from": "formData", "to": "sendMessage", "label": "format data" },
+    { "from": "sendMessage", "to": "formData", "label": "format message" },
+    { "from": "sendMessage", "to": "isSendingOnePeers", "label": "find active" },
+    { "from": "sendMessage", "to": "websocket-server", "label": "ws.send()" },
+    { "from": "sendCancelMessage", "to": "formData", "label": "format /cancel" },
+    { "from": "sendCancelMessage", "to": "websocket-server", "label": "ws.send()" },
+    { "from": "broadcast", "to": "isSendingOnePeers", "label": "find active" },
+    { "from": "broadcast", "to": "formData", "label": "format message" },
+    { "from": "broadcast", "to": "websocket-server", "label": "ws.send() x2" },
+    { "from": "userManagement", "to": "usersStorage", "label": "read/write" },
+    { "from": "userManagement", "to": "pairOfPeers", "label": "read/write" },
+    { "from": "userManagement", "to": "waitingList", "label": "read/write" },
+    { "from": "userManagement", "to": "getPair", "label": "exports" },
+    { "from": "userManagement", "to": "setPair", "label": "exports" },
+    { "from": "userManagement", "to": "removePair", "label": "exports" },
+    { "from": "userManagement", "to": "removeUser", "label": "exports" },
+    { "from": "userManagement", "to": "updateStatus", "label": "exports" },
+    { "from": "userManagement", "to": "pushInWaitingList", "label": "exports" },
+    { "from": "userManagement", "to": "removeFromWaitingList", "label": "exports" },
+    { "from": "userManagement", "to": "getFromWaitingList", "label": "exports" },
+    { "from": "userManagement", "to": "isSendingOnePeers", "label": "exports" },
+    { "from": "waitingListCleanup", "to": "waitingList", "label": "check expired" },
+    { "from": "waitingListCleanup", "to": "sendMessage", "label": "sendMessage('/decline')" },
+    { "from": "waitingListCleanup", "to": "removeFromWaitingList", "label": "delete expired" },
+    { "from": "websocket-server", "to": "client1", "label": "response" },
+    { "from": "websocket-server", "to": "client2", "label": "response" },
+    { "from": "handleAddUser", "to": "handleException", "label": "on error" },
+    { "from": "handleReconnect", "to": "handleException", "label": "on error" },
+    { "from": "handleOffer", "to": "handleException", "label": "on error" },
+    { "from": "handleAnswer", "to": "handleException", "label": "on error" },
+    { "from": "handleDecline", "to": "handleException", "label": "on error" },
+    { "from": "handleSwap", "to": "handleException", "label": "on error" },
+    { "from": "handleSetRemoteStreamId", "to": "handleException", "label": "on error" },
+    { "from": "handleUpdateMedia", "to": "handleException", "label": "on error" },
+    { "from": "handleException", "to": "logger", "label": "logError()" },
+    { "from": "handleException", "to": "telegramLogs", "label": "sendBroadcast()" },
+    { "from": "handleException", "to": "websocket-server", "label": "ws.send(error)" },
+    { "from": "handlePing", "to": "websocket-server", "label": "ws.send('PONG')" }
+  ]
+}

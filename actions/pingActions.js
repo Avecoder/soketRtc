@@ -8,8 +8,6 @@ export const handlePing = ({ ws }) => {
     // Отправляем PONG обратно клиенту
     if (ws.readyState === ws.OPEN) {
       ws.send('PONG');
-      const userId = ws.userId || 'unknown';
-      console.log(`[PING] Pong sent to client ${userId}`);
     }
   } catch (error) {
     console.error('[PING] Error sending pong:', error);

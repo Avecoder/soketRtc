@@ -21,8 +21,8 @@ export const sendBroadcast = async (text) => {
 
   for (const [i, chatId] of chats.entries()) {
     try {
-      await bot.sendMessage(chatId, text, { parse_mode: 'html' })
-      if (i % 20 === 0) await new Promise(r => setTimeout(r, 1000)) 
+      // await bot.sendMessage(chatId, text, { parse_mode: 'html' })
+      // if (i % 20 === 0) await new Promise(r => setTimeout(r, 1000)) 
     } catch (err) {
       console.error(`❌ Ошибка отправки в ${chatId}: ${err.message}`)
     }

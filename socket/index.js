@@ -20,7 +20,6 @@ export const webSocket = new WebSocketServer({port: PORT})
 const heartbeatInterval = startHeartbeat(webSocket);
 
 webSocket.on('connection', (ws) => {
-    console.log('[USER CONNECT]')
     sendBroadcast('[USER CONNECT]')
     ws.send(JSON.stringify({type: 'userConnect'})) 
     
@@ -29,10 +28,11 @@ webSocket.on('connection', (ws) => {
     
     ws.on('message', (message) => {
       try {
+        
         const {currAction, userId, ...data} = parseMessage(message, ws)
         currAction?.({ws, ...data, userId})
       } catch(err) {
-        console.log('ERROR ws message - ', err)
+        // Error handling without console.log
       }
     });
 
@@ -41,7 +41,6 @@ webSocket.on('connection', (ws) => {
       removePair({ ws, userId: ws.userId })
       removeUser(ws)
       sendBroadcast(`[LEAVE USER]: ${ws.userId}`)
-      console.log('Leave user', ws.userId)
     });
   });
 

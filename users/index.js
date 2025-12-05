@@ -98,7 +98,6 @@ export const removeUser = (ws) => {
 
         removePair({userId, ws});
 
-        console.log('[SIZE]: ', users[userId].size)
         if(users[userId].size <= 1) {
           delete users[userId];
         } else {
@@ -149,11 +148,9 @@ export const isSendingOnePeers = (sender) => {
     if (!sender || !sender.size) return false;
     
     const user = Array.from(sender).find(([_, user]) => user.status !== 'idle')
-    // console.log('LIST: ', Array.from(sender).filter(([_, user]) => user.status !== 'idle'))
     if(user && user.length) return user[1]
     else return false
   } catch (err) {
-    console.log(err)
     return false
   }
 }
@@ -163,7 +160,6 @@ export const updateStatus = (ws, status = 'idle', userId = '0') => {
     const user = users[ws.userId ?? userId].get(ws);
     user.status = status
   } catch (err) {
-    console.log(err)
     handleException(ws, 'updateStatus', `Problem checking peer status: ${err.message}`, {});
     return false
   }
@@ -179,7 +175,6 @@ setInterval(() => {
   for (const userId in waitingList) {
     const user = waitingList[userId];
     if (now - user.addedAt > EXPIRATION_TIME) {
-      console.log(`User ${userId} removed from waitingList after timeout.`);
       
       // Уведомляем пира, который названивает
       const userWhoCallsId = waitingList[userId].candidateId;

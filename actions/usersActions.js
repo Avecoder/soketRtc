@@ -34,19 +34,13 @@ const checkExistUserInWaitingList = (userId) => {
             return;
         }
 
-        
-
 
         sendBroadcast(`[peer2]: ${JSON.stringify(peer2).slice(0, 500)}`)
 
         for(const [_, p] of peer2) {
-
             p.candidate = userWaitData.candidates;
-
-   
         }
 
-        
         sendMessage('/call', peer2, {
             ...userWaitData
         });
@@ -75,19 +69,26 @@ export const handleReconnect = ({ ws, userId, name, photo = "", device = 'mobile
             throw new Error(`No existing session found for user ${userId}`);
         }
 
-        // Очищаем мертвые соединения
+        // Сначала ищем активную сессию среди всех соединений (включая мертвые)
         let activeUserData = null;
         for (const [oldWs, userData] of existingUserMap) {
-            if (oldWs.readyState === 1) {
-                // Находим активную сессию (не idle или с кандидатом)
-                if (userData.status !== 'idle' || userData.candidate) {
-                    activeUserData = userData;
-                    break;
-                }
-            } else {
-                // Удаляем мертвые соединения
-                existingUserMap.delete(oldWs);
+            // Проверяем активную сессию независимо от состояния соединения
+            if (userData.status !== 'idle' || userData.candidate) {
+                activeUserData = userData;
+                break;
             }
+        }
+
+        // Затем очищаем мертвые соединения
+        const deadConnections = [];
+        for (const [oldWs, userData] of existingUserMap) {
+            if (oldWs.readyState !== 1) {
+                deadConnections.push(oldWs);
+            }
+        }
+        // Удаляем мертвые соединения
+        for (const deadWs of deadConnections) {
+            existingUserMap.delete(deadWs);
         }
 
         if (!activeUserData) {
@@ -141,18 +142,17 @@ export const handleReconnect = ({ ws, userId, name, photo = "", device = 'mobile
             suggestion: 'Try ADD_USER instead'
         }));
         
-        handleException(ws, 'RECONNECT', err, { userId, name, photo, device });
+        // Не вызываем handleException для RECONNECT, чтобы избежать дублирования
+        // handleException(ws, 'RECONNECT', err, { userId, name, photo, device });
     }
 };
 
 export const handleAddUser = ({ ws, userId, name, photo = "", device = 'mobile' }) => {
     try {
-        console.log('[ADD_USER]: ', userId, 'name:', name, 'device:', device);
         if (!userId) throw new Error("<b>userId</b> is required");
 
         if (!users[userId]) {
             users[userId] = new Map();
-            console.log(`[ADD_USER] Created new userMap for ${userId}`);
         }
 
         const uuid = uuidv4();
@@ -178,12 +178,10 @@ export const handleAddUser = ({ ws, userId, name, photo = "", device = 'mobile' 
 
         users[userId].set(ws, userData);
         ws.userId = userId;
-        console.log(`[ADD_USER] User ${userId} added. Total users:`, Object.keys(users));
 
         checkExistUserInWaitingList(userId);
 
     } catch (err) {
-        console.log(`[ADD_USER ERROR] User ${userId}:`, err.message);
         handleException(ws, 'ADD_USER', err, { userId, name });
     }
 };
@@ -196,26 +194,14 @@ function getCurrentTime() {
     return `${hours}:${minutes}:${seconds}`;
   }
 
-// Выводим список пользователей каждые 5 секунд
+// Мониторинг пользователей каждые 5 секунд (без логирования)
 setInterval(() => {
     const connectedUsers = Object.keys(users).filter(userId => {
         const userMap = users[userId];
         return userMap && userMap.size > 0;
     });
     
-    if (connectedUsers.length > 0) {
-        console.log(`[USERS LIST] Connected users: [${connectedUsers.join(', ')}]`);
-        
-        // Дополнительная информация о каждом пользователе
-        connectedUsers.forEach(userId => {
-            const userMap = users[userId];
-            const userCount = userMap.size;
-            const userData = Array.from(userMap.values())[0];
-            console.log(`[USER ${userId}] connections: ${userCount}, status: ${userData?.status || 'unknown'}`);
-        });
-    } else {
-        console.log(`[USERS LIST] No users connected`);
-    }
+    // Логика мониторинга без вывода в консоль
 }, 5000)
 
 

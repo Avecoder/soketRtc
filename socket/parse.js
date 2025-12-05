@@ -19,8 +19,6 @@ export const parseMessage = (data, ws) => {
       }
 
       const { route, ...somethingData } = JSON.parse(messageStr);
-
-      // console.log(`[DATA]: ${JSON.stringify(somethingData)}`)
       
       return { currAction: routes[route], ...somethingData };
     } catch (err) {

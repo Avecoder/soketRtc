@@ -27,19 +27,18 @@ export const sendMessage = (route = '/', sender, data = {}) => {
         const user = isSendingOnePeers(sender, route) 
     
         if(route == '/decline') {
-            console.log("{USER}: ", user, '______' , sendedData)
+            // Decline route handling
         }
         
         if(user) {
             user.ws.send(sendedData)
         } else {
             for (const [_, value] of sender) {
-                // console.log('[BROADCAST]: ', value.userId)
                 value.ws.send(sendedData)
             }
         }
     } catch(err) {
-        console.log(`send error [${route}]: `, err)
+        // Error handling without console.log
     }
 } 
 
@@ -48,13 +47,12 @@ export const sendCancelMessage = (sender) => {
         const sendedData = formData('/cancel', {})
 
         for (const [_, value] of sender) {
-            // console.log('[CANCEL]: ', value.userId, value.status)
             if(value.status == 'idle') {
                 
                 value.ws.send(sendedData)
             }
         }
     } catch (err) {
-        console.log('send cancel error: ', err)
+        // Error handling without console.log
     }
 }

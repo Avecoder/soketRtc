@@ -38,7 +38,6 @@ export const handleUpdateMedia = ({ws,userId, ...data}) => {
     let candidate = null
     let candidateId = null
     const me = isSendingOnePeers(users[ws.userId])
-    console.log('ME CANDIDATE: ', me?.candidate)
     if (!me) {
       for(const [_, p] of users[ws.userId]) {
         candidateId = p.candidate
@@ -52,8 +51,6 @@ export const handleUpdateMedia = ({ws,userId, ...data}) => {
 
     if (!candidate) throw new Error('Candidate not found');
     const candidateActive = isSendingOnePeers(candidate)
-
-    console.log('[ENABLED STREAMS]: ', data)
 
     if(!candidateActive) {
       for(const [_, p] of candidate) {

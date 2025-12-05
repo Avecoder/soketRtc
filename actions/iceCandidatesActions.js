@@ -17,7 +17,6 @@ export const handleAddIce = ({ ws, iceParams = [] }) => {
         if (!ws?.userId) throw new Error('ws.userId is missing');
         const user = users[ws.userId].get(ws)
 
-        // console.log(`[ADD ICE] ${ws.userId}: `, iceParams)
         // Сохраняем ICE параметры в объект пользователя
         user.iceParams = iceParams
     } catch (err) {
@@ -53,7 +52,6 @@ export const handleSwap = ({ userId, ws }) => {
         const iceSecondUser = users[iceSecondUserId];
         const iceSecondUserData = isSendingOnePeers(iceSecondUser)
 
-        // console.log('iceSecondUserData: ', iceSecondUserData)
 
         // Проверяем, что объекты пользователей существуют
         if (!iceFirstUserData) throw new Error('First user was not found');
@@ -65,14 +63,11 @@ export const handleSwap = ({ userId, ws }) => {
         iceSecondUserData.candidateIce = iceFirstUser.get(ws)?.iceParams || null;
         updateStatus(ws, 'in_call')
 
-        // console.log(`[ICE FIRST](${userId}): `, iceFirstUserData.candidateIce)
-        // console.log(`[ICE SECOND](${userId}): `, iceSecondUserData.candidateIce)
 
         // Отправляем каждому пользователю его новый набор ICE-кандидатов
         sendMessage('/swapIce', iceFirstUser, { iceCandidates: iceFirstUserData.candidateIce });
         sendMessage('/swapIce', iceSecondUser, { iceCandidates: iceSecondUserData.candidateIce });
     } catch (err) {
-        console.log(`USER_ID: [${userId}]: `, userId, err)
         // В случае ошибки вызываем обработчик исключений, передавая контекст и ошибку
         handleException(ws, 'SWAP_ICE', err, { id: userId, candidateId: iceFirstUser?.candidate });
     }
